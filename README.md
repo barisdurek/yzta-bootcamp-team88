@@ -16,22 +16,21 @@ Takım X
 
 ## Ürün Açıklaması
 
-- Movie App uygulamamız ile insanların izlemek istediği filmlere ve dizilere daha kolay karar vermesini sağlayacağız. İçerisinde binlerce filmi barındıran uygulamamız aynı zamanda Netflix, Prime vb. platformlarda yayınlanıp yayınlanmadığını ve IMDB puanlarını da gösterecek.
+- AgroDenge, tarımsal üretim süreçlerini "proaktif" (önleyici) bir yaklaşımla dijitalleştiren, veri yoğun bir karar destek sistemidir. Projenin temel amacı; harici iklim verilerini, toprak parametrelerini ve bitki biyolojisi formüllerini merkezi bir yapay zeka mimarisiyle işleyerek, üreticiye su ve gübre tasarrufu sağlamak, hastalıkları sahada ortaya çıkmadan önce engellemektir. Geleneksel reaktif tarım uygulamalarının aksine, AgroDenge dinamik veri analizi ile sürdürülebilir ve maliyet etkin bir tarım modeli sunar.
 
 ## Ürün Özellikleri
 
-- Filmleri türüne göre ayırma
-- Filmlerin yönetmen, aktör, aktris vb. bilgilerini posteriyle birlikte gösterme
-- IMDB ve Rotten Tomatoes puanlarını gösterme
-- Netflix'te ve Prime'da bulunurluğunu gösterme
+- Dinamik Sulama ve Su Optimizasyonu: Mahsulün kök derinliği, büyüme evresi ve hava durumu API'lerinden gelen anlık/tarihsel verileri birleştirerek gereksiz su tüketimini engeller.
+- Besin Takibi ve Gübre Yıkanma Simülasyonu: Yağış ve sulama verileri üzerinden topraktaki NPK (azot, fosfor, potasyum) kaybını analitik modellerle hesaplayarak optimum gübreleme tavsiyeleri verir.
+- Hastalık Erken Uyarı ve Teşhis: Erken evre bitki besin stresi ve hastalık tespiti için evrişimli sinir ağlarının (CNN) karşılaştırmalı analizini kullanan, mobil kamera entegreli genişletilebilir görüntü işleme boru hattı.
+- Merkezi AI Ajanı (Orkestratör): Harici iklim verilerini, makine öğrenmesi tahminlerini (örneğin; CatBoost veya benzeri topluluk algoritmaları) ve görsel analiz çıktılarını birleştirerek kullanıcıya doğal dilde net aksiyon planları sunar.
+- Bölgesel Veri Paylaşımı ve Kolektif Koruma: Havza bazlı anonim veri toplama sistemi sayesinde, yakındaki tarlalarda tespit edilen zararlı ve hastalıkları bölgedeki diğer üreticilere proaktif bildirimlerle iletir.
 
 ## Hedef Kitle
 
-- Netflix kullanıcıları
-- Prime kullanıcıları
-- Sinema severler
-- Dizi severler
-- 15 - 65 yaş arası kullanıcılar
+- Tarımsal girdi maliyetlerini (su, gübre, ilaç) optimize etmek isteyen ticari üreticiler ve çiftçiler
+- Hobi amaçlı tarıma yönelen, veri odaklı karar almayı tercih eden genç ve orta yaşlı kullanıcılar
+- Teknolojik tarım asistanlarına entegre olmaya açık 15 - 60 yaş arası tüm tarım sektörü paydaşları
 
 ## Product Backlog URL
 
