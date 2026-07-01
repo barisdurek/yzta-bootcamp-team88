@@ -16,11 +16,11 @@ Tarla Durumu / Tarla Gözcüsü
 
 ## Ürün Açıklaması
 
-- (?), tarımsal üretim süreçlerini "proaktif" (önleyici) bir yaklaşımla dijitalleştiren, veri yoğun bir karar destek sistemidir. Projenin temel amacı; harici iklim verilerini, toprak parametrelerini ve bitki biyolojisi formüllerini merkezi bir yapay zeka mimarisiyle işleyerek, üreticiye su ve gübre tasarrufu sağlamak, hastalıkları sahada ortaya çıkmadan önce engellemektir. Geleneksel reaktif tarım uygulamalarının aksine, AgroDenge dinamik veri analizi ile sürdürülebilir ve maliyet etkin bir tarım modeli sunar.
+- Tarla Durumu / Tarla Gözcüsü, tarımsal üretim süreçlerini "proaktif" (önleyici) bir yaklaşımla dijitalleştiren, veri yoğun bir karar destek sistemidir. Projenin temel amacı; harici iklim verilerini, toprak parametrelerini ve bitki biyolojisi formüllerini merkezi bir yapay zeka mimarisiyle işleyerek, üreticiye su ve gübre tasarrufu sağlamak, hastalıkları sahada ortaya çıkmadan önce engellemektir. Geleneksel reaktif tarım uygulamalarının aksine, AgroDenge dinamik veri analizi ile sürdürülebilir ve maliyet etkin bir tarım modeli sunar.
 
 ## Ürün Özellikleri
 
-- Bölgesel Veri Paylaşımı ve Kolektif Koruma: Havza bazlı anonim veri toplama sistemi sayesinde, yakındaki tarlalarda tespit edilen zararlı ve hastalıkları bölgedeki diğer üreticilere proaktif bildirimlerle iletir. (Ana kullanma sebebi)
+- Bölgesel Veri Paylaşımı ve Kolektif Koruma: Havza bazlı anonim veri toplama sistemi sayesinde, yakındaki tarlalarda tespit edilen zararlı ve hastalıkları bölgedeki diğer üreticilere proaktif bildirimlerle iletir. (Ana kullanım yolu)
 - Dinamik Sulama ve Su Optimizasyonu: Mahsulün kök derinliği, büyüme evresi ve hava durumu API'lerinden gelen anlık/tarihsel verileri birleştirerek gereksiz su tüketimini engeller.
 - Besin Takibi ve Gübre Yıkanma Simülasyonu: Yağış ve sulama verileri üzerinden topraktaki NPK (azot, fosfor, potasyum) kaybını analitik modellerle hesaplayarak optimum gübreleme tavsiyeleri verir.
 - Hastalık Erken Uyarı ve Teşhis: Erken evre bitki besin stresi ve hastalık tespiti için evrişimli sinir ağlarının (CNN) karşılaştırmalı analizini kullanan, mobil kamera entegreli genişletilebilir görüntü işleme boru hattı.
@@ -40,27 +40,23 @@ Jira Backlog URL: https://zahidnabicelik.atlassian.net/jira/software/projects/E8
 
 # Sprint 1
 
-- **Backlog düzeni ve Story seçimleri**: Backlog'umuz ilk yapılacak story'lere göre düzenlenmiştir. 
-Story'ler yapılacak işlere (task'lere) bölünmüştür. 
+- **Backlog düzeni ve Story seçimleri**: Backlog'umuz oluşturduğumuz epic'lerdeki story'lere göre düzenlenmiştir. 
+Story'ler yapılacak işlere sub-task'lara bölünmüştür. 
 
-- **Daily Scrum**: Daily Scrum toplantılarının zamansal sebeplerden ötürü Whatsapp üzerinden yapılmasına karar verilmiştir. Daily Scrum toplantısı örneği jpeg veya word olarak Readme'de tarafımızdan paylaşılmaktadır: [Sprint 1 Daily Scrum Chats](https://github.com/OyunveUygulamaAkademisi/BootcampScrumTemplate/blob/main/ProjectManagement/Sprint1Documents/DailyScrumMeetingNotesSprint1.docx?raw=true)
-
+- **Daily Scrum**: Daily Scrum toplantılarının zamansal sebeplerden ötürü Whatsapp üzerinden yapılmasına karar verilmiştir. Daily Scrum toplantısı örneği jpeg veya word olarak Readme'de tarafımızdan paylaşılmaktadır:
+- 
 - **Sprint board update**: Sprint board screenshotları: 
-![Backlog 1](https://raw.githubusercontent.com/OyunveUygulamaAkademisi/BootcampScrumTemplate/main/ProjectManagement/Sprint1Documents/backlog1.png) 
-![Backlog 2](https://raw.githubusercontent.com/OyunveUygulamaAkademisi/BootcampScrumTemplate/main/ProjectManagement/Sprint1Documents/backlog2.png) 
-![Backlog 3](https://raw.githubusercontent.com/OyunveUygulamaAkademisi/BootcampScrumTemplate/main/ProjectManagement/Sprint1Documents/backlog3.png)
+
 
 - **Ürün Durumu**: Ekran görüntüleri:
   ![Screenshot 1](https://github.com/OyunveUygulamaAkademisi/BootcampScrumTemplate/blob/main/ProjectManagement/Sprint1Documents/productss1.png?raw=true)
   ![Screenshot 2](https://github.com/OyunveUygulamaAkademisi/BootcampScrumTemplate/blob/main/ProjectManagement/Sprint1Documents/productss2.png?raw=true)
 
-- **Sprint Review**: 
-Alınan kararlar: Veritabanı oluşturması email ile toplanacak veriler için gerekli görülmüştür. Fakat bir yandan da veritabanı form sayfası için gerekli olmamıştır. O sebeple PBI bir sonraki sprint'e aktarılmıştır. Çıkan ürünün çalışmasında ve testlerinde bir problem görülmemiştir. Ekstra koyulması gereken özellikler belirlenmiştir. Sprint Review katılımcıları: ......
+- **Sprint Review**:
+- 
 
 - **Sprint Retrospective:**
-  - Takım içindeki görev dağılımıyla ilgili düzenleme yapılması kararı alınmıştır
-  - Tahmin puanları gözden geçirilmeli ve sprint planlama toplantılarında gerekli geri bildirimlerin developer'lar tarafından verildiğine emin olunmalı
-  - Unit test'ler için ayrılan efor/saat arttırılmalı 
+-
 
 ---
 
