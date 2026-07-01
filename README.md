@@ -1,18 +1,18 @@
 # **Takım İsmi**
 
-Takım X
+Ekip 88
 
 # Ürün İle İlgili Bilgiler
 
 ## Takım Elemanları
 
-- John Doe: Product Owner
-- Jane Doe: Scrum Master
-- Atıl Samancıoğlu: Team Member/Developer
+- Aycan Kurt: Scrum Master
+- Barış Dürek: Product Owner
+- Zahid Nabi Çelik: Ekip Üyesi
 
 ## Ürün İsmi
 
---Movie App--
+Tarla Durumu / Tarla Gözcüsü
 
 ## Ürün Açıklaması
 
