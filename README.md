@@ -16,7 +16,7 @@ Tarla Durumu / Tarla Gözcüsü
 
 ## Ürün Açıklaması
 
-- Tarla Durumu / Tarla Gözcüsü, tarımsal üretim süreçlerini "proaktif" (önleyici) bir yaklaşımla dijitalleştiren, veri yoğun bir karar destek sistemidir. Projenin temel amacı; harici iklim verilerini, toprak parametrelerini ve bitki biyolojisi formüllerini merkezi bir yapay zeka mimarisiyle işleyerek, üreticiye su ve gübre tasarrufu sağlamak, hastalıkları sahada ortaya çıkmadan önce engellemektir. Geleneksel reaktif tarım uygulamalarının aksine, AgroDenge dinamik veri analizi ile sürdürülebilir ve maliyet etkin bir tarım modeli sunar.
+- Tarla Durumu / Tarla Gözcüsü, tarımsal üretim süreçlerini "proaktif" (önleyici) bir yaklaşımla dijitalleştiren, veri yoğun bir karar destek sistemidir. Projenin temel amacı; harici iklim verilerini, toprak parametrelerini ve bitki biyolojisi formüllerini merkezi bir yapay zeka mimarisiyle işleyerek, üreticiye su ve gübre tasarrufu sağlamak, hastalıkları sahada ortaya çıkmadan önce engellemektir. Geleneksel reaktif tarım uygulamalarının aksine, Tarla Durumu / Tarla Gözcüsü dinamik veri analizi ile sürdürülebilir ve maliyet etkin bir tarım modeli sunar.
 
 ## Ürün Özellikleri
 
