@@ -29,8 +29,8 @@ Tarla Gözcüsü
 ## Hedef Kitle
 
 - Tarımsal girdi maliyetlerini (su, gübre, ilaç) optimize etmek isteyen ticari üreticiler ve çiftçiler
-- Hobi amaçlı tarıma yönelen, veri odaklı karar almayı tercih eden genç ve orta yaşlı kullanıcılar
-- Teknolojik tarım asistanlarına entegre olmaya açık 15 - 60 yaş arası tüm tarım sektörü paydaşları
+- Hobi amaçlı tarıma yönelen, veri odaklı karar almayı tercih eden her yaştan telefon sahibi kullanıcılar
+- Teknolojik tarım asistanlarına entegre olmaya açık tüm tarım sektörü paydaşları
 
 ## Product Backlog URL
 
