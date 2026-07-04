@@ -56,6 +56,7 @@ Story'ler yapılacak işlere sub-task'lara bölünmüştür.
 -Veritabanı Şeması:
 
 -CNN model - EfficientNet-B2: Hastalıkların daha iyi teşhis edilebilmesi amacıyla bu modelin kullanılması uygun görülmüştür. Uygun parametreler seçilerek model eğitimi başarıyla tamamlanmış olup, ek olarak fine-tuning işlemi gerçekleştirilmiştir. Belirlenen temel parametreler ile modelin augmentation örneği aşağıdaki görseldeki gibidir:
+
 <img width="476" height="224" alt="augmentation_preview" src="https://github.com/user-attachments/assets/62583536-aba1-4af8-82ba-1d247279d8d6" />
 
 -Training işleminde modelin accuracy-loss değişimleri aşağıdaki grafikteki gibidir:
