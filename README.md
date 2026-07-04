@@ -44,15 +44,19 @@ Jira Backlog URL: https://zahidnabicelik.atlassian.net/jira/software/projects/E8
 Story'ler yapılacak işlere sub-task'lara bölünmüştür. 
 
 - **Daily Scrum**:
-- -Daily Scrum toplantıları meşguliyet sebeplerinden dolayı Whatsapp üzerinden yapılmasına karar verilmiştir. Daily Scrum toplantısı örneği jpeg olarak Readme'de paylaşılmaktadır:<img width="797" height="558" alt="DailyScrum" src="https://github.com/user-attachments/assets/e82a05e4-9bd4-4786-97aa-cbb355bcd612" />
+
+- -Daily Scrum toplantıları meşguliyet sebeplerinden dolayı Whatsapp üzerinden yapılmasına karar verilmiştir. Daily Scrum toplantısı örneği jpeg olarak Readme'de paylaşılmaktadır:
+- <img width="797" height="558" alt="DailyScrum" src="https://github.com/user-attachments/assets/e82a05e4-9bd4-4786-97aa-cbb355bcd612" />
 
 - **Sprint board update**: Sprint board screenshotları: 
 
 
 - **Ürün Durumu**: 
+
 -Veritabanı Şeması:
 
--CNN model - EfficientNet-B2: Hastalıkların daha iyi teşhis edilebilmesi amacıyla bu modelin kullanılması uygun görülmüştür. Uygun parametreler seçilerek model eğitimi başarıyla tamamlanmış olup, ek olarak fine-tuning işlemi gerçekleştirilmiştir. Belirlenen temel parametreler ile modelin augmentation örneği aşağıdaki görseldeki gibidir:<img width="476" height="224" alt="augmentation_preview" src="https://github.com/user-attachments/assets/62583536-aba1-4af8-82ba-1d247279d8d6" />
+-CNN model - EfficientNet-B2: Hastalıkların daha iyi teşhis edilebilmesi amacıyla bu modelin kullanılması uygun görülmüştür. Uygun parametreler seçilerek model eğitimi başarıyla tamamlanmış olup, ek olarak fine-tuning işlemi gerçekleştirilmiştir. Belirlenen temel parametreler ile modelin augmentation örneği aşağıdaki görseldeki gibidir:
+<img width="476" height="224" alt="augmentation_preview" src="https://github.com/user-attachments/assets/62583536-aba1-4af8-82ba-1d247279d8d6" />
 
 -Training işleminde modelin accuracy-loss değişimleri aşağıdaki grafikteki gibidir:
 <img width="2048" height="717" alt="model_training_accuracy-loss_graphic" src="https://github.com/user-attachments/assets/f8e16629-1800-46d3-8429-9a794756ade3" />
