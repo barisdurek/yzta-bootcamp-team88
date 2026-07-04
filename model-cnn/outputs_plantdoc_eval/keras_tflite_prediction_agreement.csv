@@ -1,0 +1,4 @@
+comparison,prediction_agreement,different_predictions,mean_abs_probability_diff,max_abs_probability_diff
+keras_vs_h5,0.6248847926267281,407,0.03360991179943085,0.6483286619186401
+keras_vs_tflite_float32,1.0,0,1.823033812797803e-07,3.445148468017578e-05
+keras_vs_tflite_dynamic,0.9400921658986175,65,0.0062051438726484776,0.16273218393325806

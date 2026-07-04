@@ -1,0 +1,66 @@
+path,split,plantdoc_label,model_label,keras_pred_class,keras_confidence,tflite_dynamic_pred_class,tflite_dynamic_confidence
+PlantDoc-Dataset\train\Tomato leaf late blight\Tomato leaf late blight (99).jpg,train,Tomato leaf late blight,Tomato_Late_blight,Tomato_Late_blight,0.30299404,Tomato_Early_blight,0.37951574
+PlantDoc-Dataset\train\Tomato mold leaf\Tomato mold leaf (4).jpg,train,Tomato mold leaf,Tomato_Leaf_Mold,Pepper__bell___Bacterial_spot,0.26770335,Tomato_Late_blight,0.2210858
+PlantDoc-Dataset\train\Tomato mold leaf\Tomato mold leaf (72).jpg,train,Tomato mold leaf,Tomato_Leaf_Mold,Tomato_Early_blight,0.25965306,Potato___Early_blight,0.33162278
+PlantDoc-Dataset\train\Tomato leaf yellow virus\Tomato leaf yellow virus (23).jpg,train,Tomato leaf yellow virus,Tomato__Tomato_YellowLeaf__Curl_Virus,Tomato_Leaf_Mold,0.30444807,Tomato__Tomato_YellowLeaf__Curl_Virus,0.3295705
+PlantDoc-Dataset\train\Tomato leaf late blight\Tomato leaf late blight (44).jpg,train,Tomato leaf late blight,Tomato_Late_blight,Tomato_Late_blight,0.33742785,Tomato_Early_blight,0.32634753
+PlantDoc-Dataset\train\Tomato leaf bacterial spot\Tomato leaf bacterial spot (7).jpg,train,Tomato leaf bacterial spot,Tomato_Bacterial_spot,Tomato_Late_blight,0.32568806,Tomato_Early_blight,0.2747109
+PlantDoc-Dataset\train\Tomato leaf late blight\Tomato leaf late blight (47).jpg,train,Tomato leaf late blight,Tomato_Late_blight,Tomato_Early_blight,0.39107767,Tomato_Late_blight,0.44411924
+PlantDoc-Dataset\train\Tomato leaf yellow virus\Tomato leaf yellow virus (46).jpg,train,Tomato leaf yellow virus,Tomato__Tomato_YellowLeaf__Curl_Virus,Tomato_Leaf_Mold,0.22206518,Potato___Early_blight,0.20043191
+PlantDoc-Dataset\train\Bell_pepper leaf spot\Bell_pepper leaf spot (27).jpg,train,Bell_pepper leaf spot,Pepper__bell___Bacterial_spot,Pepper__bell___Bacterial_spot,0.28615415,Tomato_Late_blight,0.23637033
+PlantDoc-Dataset\train\Tomato Early blight leaf\Tomato Early blight leaf (11).jpg,train,Tomato Early blight leaf,Tomato_Early_blight,Tomato_Early_blight,0.36205956,Tomato_Late_blight,0.37092218
+PlantDoc-Dataset\train\Tomato mold leaf\Tomato mold leaf (66).jpg,train,Tomato mold leaf,Tomato_Leaf_Mold,Tomato_Septoria_leaf_spot,0.5032683,Tomato_Late_blight,0.5111007
+PlantDoc-Dataset\test\Tomato leaf bacterial spot\Tomato leaf bacterial spot (9).jpg,test,Tomato leaf bacterial spot,Tomato_Bacterial_spot,Tomato_Late_blight,0.31300244,Tomato_Leaf_Mold,0.31875235
+PlantDoc-Dataset\train\Tomato leaf late blight\Tomato leaf late blight (49).jpg,train,Tomato leaf late blight,Tomato_Late_blight,Potato___Late_blight,0.2436526,Tomato_Early_blight,0.22701295
+PlantDoc-Dataset\train\Potato leaf late blight\Potato leaf late blight (45).jpg,train,Potato leaf late blight,Potato___Late_blight,Potato___Early_blight,0.18862517,Tomato_Late_blight,0.2182376
+PlantDoc-Dataset\train\Tomato leaf\Tomato leaf (38).jpg,train,Tomato leaf,Tomato_healthy,Tomato_Late_blight,0.19185326,Tomato_Early_blight,0.19879974
+PlantDoc-Dataset\train\Tomato Septoria leaf spot\Tomato Septoria leaf spot (100).jpg,train,Tomato Septoria leaf spot,Tomato_Septoria_leaf_spot,Potato___Early_blight,0.33294266,Tomato_Early_blight,0.3356552
+PlantDoc-Dataset\train\Tomato leaf late blight\Tomato leaf late blight (87).jpg,train,Tomato leaf late blight,Tomato_Late_blight,Tomato_Late_blight,0.45096338,Potato___Late_blight,0.4070845
+PlantDoc-Dataset\train\Tomato Septoria leaf spot\Tomato Septoria leaf spot (83).jpg,train,Tomato Septoria leaf spot,Tomato_Septoria_leaf_spot,Pepper__bell___Bacterial_spot,0.32412466,Potato___Early_blight,0.29857522
+PlantDoc-Dataset\train\Bell_pepper leaf\Bell_pepper leaf (24).jpg,train,Bell_pepper leaf,Pepper__bell___healthy,Pepper__bell___Bacterial_spot,0.21766451,Potato___Early_blight,0.20726837
+PlantDoc-Dataset\train\Tomato leaf bacterial spot\Tomato leaf bacterial spot (27).jpg,train,Tomato leaf bacterial spot,Tomato_Bacterial_spot,Potato___Late_blight,0.24063897,Tomato_Early_blight,0.25725114
+PlantDoc-Dataset\train\Tomato leaf late blight\Tomato leaf late blight (15).jpg,train,Tomato leaf late blight,Tomato_Late_blight,Potato___Early_blight,0.41284412,Tomato_Late_blight,0.39755395
+PlantDoc-Dataset\train\Bell_pepper leaf spot\Bell_pepper leaf spot (17).jpg,train,Bell_pepper leaf spot,Pepper__bell___Bacterial_spot,Pepper__bell___healthy,0.38405192,Tomato_Late_blight,0.34522715
+PlantDoc-Dataset\train\Tomato leaf late blight\Tomato leaf late blight (83).jpg,train,Tomato leaf late blight,Tomato_Late_blight,Tomato_Late_blight,0.37690273,Pepper__bell___healthy,0.3675319
+PlantDoc-Dataset\test\Tomato leaf\Tomato leaf (2).jpg,test,Tomato leaf,Tomato_healthy,Tomato__Target_Spot,0.18143208,Pepper__bell___healthy,0.16870506
+PlantDoc-Dataset\train\Tomato mold leaf\Tomato mold leaf (14).jpg,train,Tomato mold leaf,Tomato_Leaf_Mold,Potato___Late_blight,0.39841628,Potato___Early_blight,0.41586182
+PlantDoc-Dataset\train\Tomato Septoria leaf spot\Tomato Septoria leaf spot (47).jpg,train,Tomato Septoria leaf spot,Tomato_Septoria_leaf_spot,Potato___Early_blight,0.28290868,Pepper__bell___Bacterial_spot,0.25508913
+PlantDoc-Dataset\train\Bell_pepper leaf\Bell_pepper leaf (48).jpg,train,Bell_pepper leaf,Pepper__bell___healthy,Tomato_healthy,0.28631502,Tomato_Early_blight,0.32080138
+PlantDoc-Dataset\train\Tomato Early blight leaf\Tomato Early blight leaf (19).jpg,train,Tomato Early blight leaf,Tomato_Early_blight,Pepper__bell___Bacterial_spot,0.30553672,Tomato_Early_blight,0.2903832
+PlantDoc-Dataset\train\Tomato Early blight leaf\Tomato Early blight leaf (50).jpg,train,Tomato Early blight leaf,Tomato_Early_blight,Tomato_Early_blight,0.3094173,Tomato_Late_blight,0.32626736
+PlantDoc-Dataset\train\Tomato leaf bacterial spot\Tomato leaf bacterial spot (66).jpg,train,Tomato leaf bacterial spot,Tomato_Bacterial_spot,Tomato_Septoria_leaf_spot,0.43601534,Tomato_Early_blight,0.42116737
+PlantDoc-Dataset\train\Tomato Septoria leaf spot\Tomato Septoria leaf spot (59).jpg,train,Tomato Septoria leaf spot,Tomato_Septoria_leaf_spot,Pepper__bell___Bacterial_spot,0.2554287,Tomato_Late_blight,0.24916407
+PlantDoc-Dataset\train\Tomato Septoria leaf spot\Tomato Septoria leaf spot (33).jpg,train,Tomato Septoria leaf spot,Tomato_Septoria_leaf_spot,Tomato_Leaf_Mold,0.22715308,Tomato_Early_blight,0.25506806
+PlantDoc-Dataset\test\Potato leaf early blight\Potato leaf early blight (6).jpg,test,Potato leaf early blight,Potato___Early_blight,Potato___Late_blight,0.3266372,Tomato_Early_blight,0.3112327
+PlantDoc-Dataset\train\Tomato mold leaf\Tomato mold leaf (8).jpg,train,Tomato mold leaf,Tomato_Leaf_Mold,Tomato_Leaf_Mold,0.3199993,Tomato_Early_blight,0.31963432
+PlantDoc-Dataset\train\Tomato leaf mosaic virus\Tomato leaf mosaic virus (37).jpg,train,Tomato leaf mosaic virus,Tomato__Tomato_mosaic_virus,Pepper__bell___Bacterial_spot,0.1781959,Potato___Early_blight,0.20668472
+PlantDoc-Dataset\train\Tomato Early blight leaf\Tomato Early blight leaf (28).jpg,train,Tomato Early blight leaf,Tomato_Early_blight,Tomato_Late_blight,0.3638845,Tomato_Early_blight,0.44749767
+PlantDoc-Dataset\train\Potato leaf late blight\Potato leaf late blight (34).jpg,train,Potato leaf late blight,Potato___Late_blight,Tomato_healthy,0.1937973,Potato___Late_blight,0.2268419
+PlantDoc-Dataset\test\Tomato Early blight leaf\Tomato Early blight leaf (6).jpg,test,Tomato Early blight leaf,Tomato_Early_blight,Pepper__bell___Bacterial_spot,0.26365817,Tomato_Early_blight,0.27169704
+PlantDoc-Dataset\train\Tomato Septoria leaf spot\Tomato Septoria leaf spot (8).jpg,train,Tomato Septoria leaf spot,Tomato_Septoria_leaf_spot,Tomato_Septoria_leaf_spot,0.2539869,Pepper__bell___Bacterial_spot,0.26415604
+PlantDoc-Dataset\train\Tomato Early blight leaf\Tomato Early blight leaf (58).jpg,train,Tomato Early blight leaf,Tomato_Early_blight,Tomato_Septoria_leaf_spot,0.30451918,Tomato__Target_Spot,0.2744186
+PlantDoc-Dataset\test\Tomato leaf\Tomato leaf (7).jpg,test,Tomato leaf,Tomato_healthy,Potato___Early_blight,0.21195354,Tomato_healthy,0.19185297
+PlantDoc-Dataset\train\Potato leaf late blight\Potato leaf late blight (44).jpg,train,Potato leaf late blight,Potato___Late_blight,Potato___Early_blight,0.39595535,Tomato_Early_blight,0.36637664
+PlantDoc-Dataset\train\Tomato Septoria leaf spot\Tomato Septoria leaf spot (87).jpg,train,Tomato Septoria leaf spot,Tomato_Septoria_leaf_spot,Tomato_Bacterial_spot,0.43693826,Tomato_Early_blight,0.40330708
+PlantDoc-Dataset\train\Tomato mold leaf\Tomato mold leaf (5).jpg,train,Tomato mold leaf,Tomato_Leaf_Mold,Tomato_Late_blight,0.3346945,Potato___Early_blight,0.32111084
+PlantDoc-Dataset\train\Tomato leaf bacterial spot\Tomato leaf bacterial spot (61).jpg,train,Tomato leaf bacterial spot,Tomato_Bacterial_spot,Pepper__bell___Bacterial_spot,0.26895383,Tomato_Early_blight,0.2535774
+PlantDoc-Dataset\train\Bell_pepper leaf\Bell_pepper leaf (47).jpg,train,Bell_pepper leaf,Pepper__bell___healthy,Potato___Late_blight,0.28873786,Tomato_Early_blight,0.31275442
+PlantDoc-Dataset\train\Potato leaf early blight\Potato leaf early blight (57).jpg,train,Potato leaf early blight,Potato___Early_blight,Potato___Late_blight,0.44836554,Potato___Early_blight,0.36321655
+PlantDoc-Dataset\train\Tomato mold leaf\Tomato mold leaf (13).jpg,train,Tomato mold leaf,Tomato_Leaf_Mold,Tomato_Late_blight,0.34377658,Tomato__Tomato_YellowLeaf__Curl_Virus,0.3032223
+PlantDoc-Dataset\train\Tomato leaf late blight\Tomato leaf late blight (62).jpg,train,Tomato leaf late blight,Tomato_Late_blight,Pepper__bell___Bacterial_spot,0.21666315,Tomato_Late_blight,0.24053864
+PlantDoc-Dataset\train\Tomato Septoria leaf spot\Tomato Septoria leaf spot (78).jpg,train,Tomato Septoria leaf spot,Tomato_Septoria_leaf_spot,Potato___Early_blight,0.2466205,Tomato_Septoria_leaf_spot,0.25224867
+PlantDoc-Dataset\train\Tomato mold leaf\Tomato mold leaf (75).jpg,train,Tomato mold leaf,Tomato_Leaf_Mold,Pepper__bell___Bacterial_spot,0.2238225,Tomato_Septoria_leaf_spot,0.18757719
+PlantDoc-Dataset\train\Tomato Early blight leaf\Tomato Early blight leaf (54).jpg,train,Tomato Early blight leaf,Tomato_Early_blight,Pepper__bell___Bacterial_spot,0.21737885,Potato___Early_blight,0.2221911
+PlantDoc-Dataset\train\Tomato Septoria leaf spot\Tomato Septoria leaf spot (26).jpg,train,Tomato Septoria leaf spot,Tomato_Septoria_leaf_spot,Tomato_Leaf_Mold,0.21582885,Tomato_Late_blight,0.23130204
+PlantDoc-Dataset\train\Tomato Septoria leaf spot\Tomato Septoria leaf spot (55).jpg,train,Tomato Septoria leaf spot,Tomato_Septoria_leaf_spot,Tomato_Septoria_leaf_spot,0.26733926,Tomato_Early_blight,0.3039049
+PlantDoc-Dataset\train\Tomato Septoria leaf spot\Tomato Septoria leaf spot (123).jpg,train,Tomato Septoria leaf spot,Tomato_Septoria_leaf_spot,Pepper__bell___Bacterial_spot,0.34240845,Tomato_Early_blight,0.32127452
+PlantDoc-Dataset\train\Tomato leaf bacterial spot\Tomato leaf bacterial spot (30).jpg,train,Tomato leaf bacterial spot,Tomato_Bacterial_spot,Tomato_Late_blight,0.5484857,Potato___Late_blight,0.4658672
+PlantDoc-Dataset\train\Tomato leaf bacterial spot\Tomato leaf bacterial spot (92).jpg,train,Tomato leaf bacterial spot,Tomato_Bacterial_spot,Tomato_healthy,0.2057699,Potato___Early_blight,0.18505482
+PlantDoc-Dataset\train\Tomato Septoria leaf spot\Tomato Septoria leaf spot (109).jpg,train,Tomato Septoria leaf spot,Tomato_Septoria_leaf_spot,Tomato_Late_blight,0.31300244,Tomato_Leaf_Mold,0.31875235
+PlantDoc-Dataset\train\Tomato Septoria leaf spot\Tomato Septoria leaf spot (31).jpg,train,Tomato Septoria leaf spot,Tomato_Septoria_leaf_spot,Potato___Early_blight,0.28565076,Tomato_Septoria_leaf_spot,0.28846833
+PlantDoc-Dataset\train\Tomato leaf late blight\Tomato leaf late blight (30).jpg,train,Tomato leaf late blight,Tomato_Late_blight,Potato___Late_blight,0.2854707,Tomato_Late_blight,0.2682579
+PlantDoc-Dataset\test\Bell_pepper leaf spot\Bell_pepper leaf spot (7).jpg,test,Bell_pepper leaf spot,Pepper__bell___Bacterial_spot,Pepper__bell___healthy,0.19209953,Tomato_Late_blight,0.20226482
+PlantDoc-Dataset\train\Bell_pepper leaf spot\Bell_pepper leaf spot (55).jpg,train,Bell_pepper leaf spot,Pepper__bell___Bacterial_spot,Pepper__bell___healthy,0.1845186,Tomato_Early_blight,0.16048644
+PlantDoc-Dataset\test\Tomato Septoria leaf spot\Tomato Septoria leaf spot (1).jpg,test,Tomato Septoria leaf spot,Tomato_Septoria_leaf_spot,Potato___Early_blight,0.28440276,Tomato_Late_blight,0.30259153
+PlantDoc-Dataset\train\Tomato leaf yellow virus\Tomato leaf yellow virus (43).jpg,train,Tomato leaf yellow virus,Tomato__Tomato_YellowLeaf__Curl_Virus,Tomato__Target_Spot,0.14637387,Tomato_Early_blight,0.1730486
+PlantDoc-Dataset\train\Potato leaf early blight\Potato leaf early blight (54).jpg,train,Potato leaf early blight,Potato___Early_blight,Potato___Late_blight,0.3405726,Tomato_Late_blight,0.33064687
