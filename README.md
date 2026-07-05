@@ -1,3 +1,5 @@
+<img width="1341" height="1820" alt="database_schema_updated" src="https://github.com/user-attachments/assets/e36f6e5a-630e-4582-8987-6b683ac6cef1" />
+<img width="1341" height="1820" alt="database_schema_updated" src="https://github.com/user-attachments/assets/aeeeeaf7-2d0e-4df9-a81e-1bb13e62f4b8" />
 # **Takım İsmi**
 
 Ekip 88
@@ -54,6 +56,8 @@ Story'ler yapılacak işlere sub-task'lara bölünmüştür.
 - **Ürün Durumu**: 
 
 -Veritabanı Şeması:
+
+<img width="1341" height="1820" alt="database_schema_updated" src="https://github.com/user-attachments/assets/4eeb4161-68f5-4800-98f8-9c8c6a58102e" />
 
 -CNN model - EfficientNet-B2: Hastalıkların daha iyi teşhis edilebilmesi amacıyla bu modelin kullanılması uygun görülmüştür. Uygun parametreler seçilerek model eğitimi başarıyla tamamlanmış olup, ek olarak fine-tuning işlemi gerçekleştirilmiştir. Belirlenen temel parametreler ile modelin augmentation örneği aşağıdaki görseldeki gibidir:
 
