@@ -48,7 +48,10 @@ Story'ler yapılacak işlere sub-task'lara bölünmüştür.
 - <img width="797" height="558" alt="DailyScrum" src="https://github.com/user-attachments/assets/e82a05e4-9bd4-4786-97aa-cbb355bcd612" />
 
 - **Sprint board update (screenshotlar)**: 
-
+<img width="1920" height="3488" alt="Sprint1_Board1" src="https://github.com/user-attachments/assets/9f90d497-3e97-41d4-890c-c08cf67b0208" />
+<img width="2561" height="4578" alt="Sprint1_Board2" src="https://github.com/user-attachments/assets/f2927710-c97f-4b35-8a49-c9e7e9f6ec79" />
+<img width="2561" height="4686" alt="Sprint1_Board3" src="https://github.com/user-attachments/assets/3be0ef1b-a3af-45d4-a1ab-dd399c77ca5d" />
+<img width="2561" height="5620" alt="Sprint1_Board4" src="https://github.com/user-attachments/assets/771d1fed-77e4-4749-80b3-0309bd588d5e" />
 
 - **Ürün Durumu**: 
 
