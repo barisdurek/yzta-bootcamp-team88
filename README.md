@@ -36,12 +36,11 @@ Tarla Gözcüsü
 
 Jira Backlog URL: https://zahidnabicelik.atlassian.net/jira/software/projects/E88/boards/133/backlog?atlOrigin=eyJpIjoiNmRiZmM1MmU4MjY2NGVlM2JiMjQxODFiOTU1MzE5YTciLCJwIjoiaiJ9
 
+- **Backlog düzeni ve Story seçimleri**: Backlog'umuz oluşturduğumuz epic'lerdeki story'lere göre düzenlenmiştir. 
+Story'ler yapılacak işlere sub-task'lara bölünmüştür. 
 ---
 
 # Sprint 1
-
-- **Backlog düzeni ve Story seçimleri**: Backlog'umuz oluşturduğumuz epic'lerdeki story'lere göre düzenlenmiştir. 
-Story'ler yapılacak işlere sub-task'lara bölünmüştür. 
 
 - **Daily Scrum**:
 
@@ -75,9 +74,30 @@ Story'ler yapılacak işlere sub-task'lara bölünmüştür.
 
 # Sprint 2
 
+- **Daily Scrum**:
 
+- **Sprint board update**: Sprint board screenshotları:
+
+- **Ürün Durumu**:
+
+- **Sprint Review**:
+- 
+
+- **Sprint Retrospective:**
+-
 ---
 
 # Sprint 3
 
+- **Daily Scrum**:
+
+- **Sprint board update**: Sprint board screenshotları:
+ 
+- **Ürün Durumu**:
+
+- **Sprint Review**:
+- 
+
+- **Sprint Retrospective:**
+-
 ---
