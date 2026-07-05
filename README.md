@@ -47,7 +47,7 @@ Story'ler yapılacak işlere sub-task'lara bölünmüştür.
 - -Daily Scrum toplantıları meşguliyet sebeplerinden dolayı Whatsapp üzerinden yapılmasına karar verilmiştir. Daily Scrum toplantısı örneği jpeg olarak Readme'de paylaşılmaktadır:
 - <img width="797" height="558" alt="DailyScrum" src="https://github.com/user-attachments/assets/e82a05e4-9bd4-4786-97aa-cbb355bcd612" />
 
-- **Sprint board update**: Sprint board screenshotları: 
+- **Sprint board update (screenshotlar)**: 
 
 
 - **Ürün Durumu**: 
