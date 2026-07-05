@@ -1,5 +1,3 @@
-<img width="1341" height="1820" alt="database_schema_updated" src="https://github.com/user-attachments/assets/e36f6e5a-630e-4582-8987-6b683ac6cef1" />
-<img width="1341" height="1820" alt="database_schema_updated" src="https://github.com/user-attachments/assets/aeeeeaf7-2d0e-4df9-a81e-1bb13e62f4b8" />
 # **Takım İsmi**
 
 Ekip 88
