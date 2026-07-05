@@ -63,7 +63,6 @@ Story'ler yapılacak işlere sub-task'lara bölünmüştür.
 -Training işleminde modelin accuracy-loss değişimleri aşağıdaki grafikteki gibidir:
 <img width="2048" height="717" alt="model_training_accuracy-loss_graphic" src="https://github.com/user-attachments/assets/f8e16629-1800-46d3-8429-9a794756ade3" />
 
--
 - **Sprint Review:**
 - Tarla Gözcüsü projemizin veri mimarisini ve yapay zeka altyapısını kurduğumuz Sprint 1'i, "'Hava Durumu' Verilerinin Sisteme Entegre Edilmesi" storymiz dışındaki tüm görevleri başarıyla tamamlayarak kapattık. GitHub repomuzu yayına aldık ve WhatsApp üzerinden yürüttüğümüz asenkron iletişim ile veritabanı şemasını repomuza ekledik. Veri hazırlığı sürecinde oldukça kapsamlı bir ön işleme yürüttük; agriculture_dataset.csv dosyasındaki Türkçe karakter (cp1254) sorunlarını Python ile çözerek UTF-8 formatında temizledik ve satır sayısını optimize ettik. NASA Power 2001-2025 iklim verilerini 6 farklı bölge için (Adana, Şanlıurfa, Antalya, Konya, Manisa, Tekirdağ) birleştirip nasa_climatic_summary.csv tablosunu oluşturduk. Hiperspektral Toprak Nemi verisindeki 125 özelliği PCA (Temel Bileşenler Analizi) ve StandardScaler ile işleyerek eğitime hazır hale getirdik. Görüntü işleme tarafında PlantVillage veri setindeki sınıf dengesizliğini veri artırma (Data Augmentation) ile giderdik ve EfficientNet-B3 mimarisiyle CNN modelimizi eğittik. Modelimizin yüksek performansını confusion matrix ve loss/accuracy grafikleriyle doğrulayarak dokümante ettik. 
 
