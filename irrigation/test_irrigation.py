@@ -68,7 +68,33 @@ def test_irrigation():
     assert result_3_shallow < result_3_deep, "Sığ köklü bitkinin günlük transpirasyon su kaybı daha az olmalıydı!"
     assert result_corrupt == 0.0, "Hatalı veride güvenli varsayılan olarak 0.0 dönmeliydi!"
     
-    print("Tüm testler başarıyla geçildi!")
+    # --- NPK Leaching Testleri ---
+    from leaching import calculate_npk_leaching
+    
+    # Test case 5: Kum toprakta yüksek su girişi (Yüksek süzülme ve yıkanma)
+    leach_sand = calculate_npk_leaching(precipitation_mm=25.0, net_irrigation_mm=15.0, soil_type="sand")
+    print(f"Test 5 (Kum, 40mm Su Girişi) NPK Kayıpları: {leach_sand}")
+    assert leach_sand['N_loss_pct'] > leach_sand['K_loss_pct'], "Azot yıkanması potasyumdan fazla olmalı!"
+    assert leach_sand['K_loss_pct'] > leach_sand['P_loss_pct'], "Potasyum yıkanması fosfordan fazla olmalı!"
+    
+    # Test case 6: Kil toprakta aynı su girişi (Daha düşük süzülme ve yıkanma)
+    leach_clay = calculate_npk_leaching(precipitation_mm=25.0, net_irrigation_mm=15.0, soil_type="clay")
+    print(f"Test 6 (Kil, 40mm Su Girişi) NPK Kayıpları: {leach_clay}")
+    assert leach_sand['N_loss_pct'] > leach_clay['N_loss_pct'], "Kumlu toprakta yıkanma killi topraktan fazla olmalı!"
+    
+    # Test case 7: Su girişi sınır değerinin altında (Yıkanma 0 olmalı)
+    leach_dry = calculate_npk_leaching(precipitation_mm=2.0, net_irrigation_mm=0.0, soil_type="loam")
+    print(f"Test 7 (Tınlı, 2mm Su Girişi) NPK Kayıpları: {leach_dry}")
+    assert leach_dry['N_loss_pct'] == 0.0, "Kapasite altındaki su girişinde yıkanma olmamalı!"
+    
+    # Test case 8: Hatalı toprak tipi veya bozuk veriler (Güvenli varsayılan tınlı olmalı)
+    leach_invalid = calculate_npk_leaching(precipitation_mm="invalid", net_irrigation_mm=20.0, soil_type="unknown_soil")
+    print(f"Test 8 (Bozuk/Bilinmeyen Veri) NPK Kayıpları: {leach_invalid}")
+    # Hata durumunda default_losses (0.0 değerleri) döner.
+    assert leach_invalid['N_loss_pct'] == 0.0, "Hatalı veride yıkanma kaybı 0.0 dönmeli!"
+    
+    print("Tüm sulama ve NPK yıkanma testleri başarıyla geçildi!")
 
 if __name__ == "__main__":
     test_irrigation()
+
