@@ -39,6 +39,10 @@ Jira Backlog URL: https://zahidnabicelik.atlassian.net/jira/software/projects/E8
 - **Backlog düzeni ve Story seçimleri**: Backlog'umuz oluşturduğumuz epic'lerdeki story'lere göre düzenlenmiştir. 
 Story'ler yapılacak işlere sub-task'lara bölünmüştür. 
 ---
+**Board Düzeni**: 
+Turuncu Simge: Zahid Nabi Çelik
+Mavi Simge: Aycan Kurt
+Mor Simge: Barış Dürek
 
 # Sprint 1
 
