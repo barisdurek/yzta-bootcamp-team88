@@ -90,10 +90,11 @@ Mor Simge: Barış Dürek
 - **Ürün Durumu**:
 
 - **Sprint Review**:
-- 
+- Tarla Gözcüsü projemizin backend entegrasyonu, karar destek algoritmaları ve mobil uygulama arayüzlerini geliştirdiğimiz Sprint 2'yi, tüm hedeflerimizi ve planlanan Jira görevlerimizi eksiksiz tamamlayarak başarıyla kapattık. Bir önceki sprintten devraldığımız koordinat bazlı OpenWeatherMap API entegrasyonunu tamamlayarak sisteme dahil ettik. Karar destek algoritmaları tarafında, FAO-56 Penman-Monteith denklemini temel alan günlük optimal sulama ihtiyacı modelini ve birinci derece reaksiyon kinetiğiyle çalışan NPK gübre yıkanma (leaching) modelini geliştirdik. Merkezi API sunucumuz olan FastAPI üzerinde; bu matematiksel modelleri, PostgreSQL (SQLAlchemy) veritabanı persistence katmanını, EfficientNet-B2 TFLite yaprak hastalığı teşhis modelini ve Google Gemini API entegrasyonlu proaktif Terra AI karar destek asistanını bir araya getirdik. Ayrıca, tüm bu servislerin entegrasyonunu kolaylaştırmak amacıyla istek/yanıt şemalarını içeren kapsamlı API dokümantasyonunu backend/README.md dosyamıza ekledik. Mobil tarafta ise Flutter uygulamamızın; Dashboard, Leaf Disease Diagnosis, Giriş/Kayıt, Optimizasyon Detayları, Risk Haritası ve Terra Chat ekranlarını tamamlayarak ApiService üzerinden backend servisleriyle entegre ettik. (taslak)
 
 - **Sprint Retrospective:**
--
+- Sprint 2 süresince paralel yürüttüğümüz backend servis kodlaması, tarımsal algoritmaların formülleştirilmesi ve mobil arayüz geliştirme çalışmalarını, aramızdaki güçlü koordinasyon ve net görev dağılımı sayesinde yüksek bir verimlilikle tamamladık. WhatsApp üzerinden yürüttüğümüz asenkron iletişim, karşılaştığımız teknik engelleri anında aşmamızı sağladı. Jira tahtamızdaki tüm entegrasyon görevlerini tamamladık. Final adımlarını atacağımız Sprint 3'e geçerken ana odak noktamız; uçtan uca hata yönetimi testleriyle ürün bütünlüğünü korumak, kodumuzu arındırıp frontend ve backend katmanlarımızı buluta taşımak, 3 dakikalık proje sunum videosunu hazırlamak ve 2 Ağustos'a teslim formunu eksiksiz bir şekilde tamamlamak olacaktır. (taslak)
+
 ---
 
 # Sprint 3
