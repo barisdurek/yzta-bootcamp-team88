@@ -44,7 +44,7 @@ Turuncu Simge: Zahid Nabi Çelik
 Mavi Simge: Aycan Kurt
 Mor Simge: Barış Dürek
 <details>
-<summary># Sprint 1</summary>
+<summary> # Sprint 1 </summary>
 <br>
 
 - **Daily Scrum**:
@@ -80,7 +80,7 @@ Mor Simge: Barış Dürek
 - **Sprint Retrospective:**
 - Sprint 1 boyunca metin, tablo ve görüntü gibi üç farklı veri tipinde yürüttüğümüz yoğun ön işleme ve modelleme süreçlerini, belirlediğimiz görev dağılımı sayesinde yüksek bir verimlilikle yönettik. WhatsApp üzerinden yürüttüğümüz Daily Scrum toplantıları, şeffaf bir iletişim kurmamızı sağlayarak karşılaştığımız teknik engelleri hızla aşmamıza yardımcı oldu. Jira tahtamızdaki zorlu API entegrasyonu, JSON ayrıştırma ve model eğitimi görevlerinin neredeyse tamamını "Done" statüsüne çekebilmemiz, takım içindeki uyumun ve paralel çalışma refleksimizin ne kadar güçlü olduğunu kanıtladı. EfficientNet-B3 modelimizin eğitiminde ve veri artırma (augmentation) aşamalarında elde ettiğimiz başarılı sonuçlar, sistemin temelini sağlam atmamızı sağladı. Sprint 2'ye geçerken en büyük odak noktamız, ilk sprintte titizlikle hazırladığımız bu veri kümelerini ve eğitilmiş güçlü CNN modelini arka uç (backend) mimarisine entegre etmek ve API entegrasyonunu tamamlamak olacaktır.
 </details>
----
+
 <details>
 <summary># Sprint 2</summary>
 <br>
@@ -102,7 +102,7 @@ Mor Simge: Barış Dürek
 - **Sprint Retrospective:**
 - Sprint 2 süresince paralel yürüttüğümüz backend servis kodlaması, tarımsal algoritmaların formülleştirilmesi ve mobil arayüz geliştirme çalışmalarını, aramızdaki güçlü koordinasyon ve net görev dağılımı sayesinde yüksek bir verimlilikle tamamladık. WhatsApp üzerinden yürüttüğümüz asenkron iletişim, karşılaştığımız teknik engelleri anında aşmamızı sağladı. Jira tahtamızdaki tüm entegrasyon görevlerini tamamladık. Final adımlarını atacağımız Sprint 3'e geçerken ana odak noktamız; uçtan uca hata yönetimi testleriyle ürün bütünlüğünü korumak, kodumuzu arındırıp frontend ve backend katmanlarımızı buluta taşımak, 3 dakikalık proje sunum videosunu hazırlamak ve 2 Ağustos'a teslim formunu eksiksiz bir şekilde tamamlamak olacaktır. (taslak)
 </details>
----
+
 <details>
 <summary># Sprint 3</summary>
 <br>
