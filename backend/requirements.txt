@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+requests
+python-dotenv
+python-multipart
+pydantic
+sqlalchemy
+psycopg[binary]
+numpy
+Pillow
+tensorflow==2.19.0
+google-generativeai
