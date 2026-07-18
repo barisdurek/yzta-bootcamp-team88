@@ -84,6 +84,8 @@ Mor Simge: Barış Dürek
 # Sprint 2
 
 - **Daily Scrum**:
+<img width="788" height="320" alt="DailyScrum 1" src="https://github.com/user-attachments/assets/917fe3d4-bc4c-466d-be58-885b182eb163" />
+<img width="793" height="473" alt="DailyScrum 2" src="https://github.com/user-attachments/assets/22d1e101-2395-461d-8547-3b622218fe6d" />
 
 - **Sprint board update**: Sprint board screenshotları:
 
