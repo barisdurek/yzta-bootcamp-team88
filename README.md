@@ -40,9 +40,9 @@ Jira Backlog URL: https://zahidnabicelik.atlassian.net/jira/software/projects/E8
 Story'ler yapılacak işlere sub-task'lara bölünmüştür. 
 ---
 **Board Düzeni**: 
--Turuncu Simge: Zahid Nabi Çelik
--Mavi Simge: Aycan Kurt
--Mor Simge: Barış Dürek
+- Turuncu Simge: Zahid Nabi Çelik
+- Mavi Simge: Aycan Kurt
+- Mor Simge: Barış Dürek
 
 <details>
 <summary> <h2>Sprint 1</h2> </summary>
