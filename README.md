@@ -16,15 +16,15 @@ Tarla Gözcüsü
 
 ## Ürün Açıklaması
 
-- Tarla Gözcüsü, tarımsal üretim süreçlerini "proaktif" (önleyici) bir yaklaşımla dijitalleştiren, veri yoğun bir karar destek sistemidir. Projenin temel amacı; harici iklim verilerini, toprak parametrelerini ve bitki biyolojisi formüllerini merkezi bir yapay zeka mimarisiyle işleyerek, üreticiye su ve gübre tasarrufu sağlamak, hastalıkları sahada ortaya çıkmadan önce engellemektir. Geleneksel reaktif tarım uygulamalarının aksine, Tarla Gözcüsü dinamik veri analizi ile sürdürülebilir ve maliyet etkin bir tarım modeli sunar.
+- Tarla Gözcüsü; tarımsal üretim süreçlerini proaktif ve önleyici bir yaklaşımla dijitalleştiren, veri yoğunluklu bir karar destek sistemidir. Projenin temel amacı; harici iklim verilerini, toprak parametrelerini ve bitki biyolojisi formüllerini merkezi bir yapay zeka mimarisiyle işleyerek üreticiye su ve gübre tasarrufu sağlamak, hastalıkları sahada ortaya çıkmadan önce engellemektir. Geleneksel reaktif tarım uygulamalarının aksine Tarla Gözcüsü dinamik veri analizi ile sürdürülebilir ve maliyet etkin bir tarım modeli sunar.
 
 ## Ürün Özellikleri
 
 - Bölgesel Veri Paylaşımı ve Kolektif Koruma: Havza bazlı anonim veri toplama sistemi sayesinde, yakındaki tarlalarda tespit edilen zararlı ve hastalıkları bölgedeki diğer üreticilere proaktif bildirimlerle iletir. (Ana kullanım yolu)
-- Dinamik Sulama ve Su Optimizasyonu: Mahsulün kök derinliği, büyüme evresi ve hava durumu API'lerinden gelen anlık/tarihsel verileri birleştirerek gereksiz su tüketimini engeller.
+- Dinamik Sulama ve Su Optimizasyonu: Mahsulün kök derinliği, büyüme evresi ve hava durumu API'larından gelen anlık/tarihsel verileri birleştirerek gereksiz su tüketimini engeller.
 - Besin Takibi ve Gübre Yıkanma Simülasyonu: Yağış ve sulama verileri üzerinden topraktaki NPK (azot, fosfor, potasyum) kaybını analitik modellerle hesaplayarak optimum gübreleme tavsiyeleri verir.
 - Hastalık Erken Uyarı ve Teşhis: Erken evre bitki besin stresi ve hastalık tespiti için evrişimli sinir ağlarının (CNN) karşılaştırmalı analizini kullanan, mobil kamera entegreli genişletilebilir görüntü işleme boru hattı.
-- Merkezi AI Ajanı (Orkestratör): Harici iklim verilerini, makine öğrenmesi tahminlerini (örneğin; CatBoost veya benzeri topluluk algoritmaları) ve görsel analiz çıktılarını birleştirerek kullanıcıya doğal dilde net aksiyon planları sunar.
+- Merkezi AI Ajanı (Orkestratör): Harici iklim verilerini, makine öğrenmesi tahminlerini ve görsel analiz çıktılarını birleştirerek kullanıcıya doğal dilde net aksiyon planları sunar.
 
 ## Hedef Kitle
 
@@ -37,7 +37,7 @@ Tarla Gözcüsü
 Jira Backlog URL: https://zahidnabicelik.atlassian.net/jira/software/projects/E88/boards/133/backlog?atlOrigin=eyJpIjoiNmRiZmM1MmU4MjY2NGVlM2JiMjQxODFiOTU1MzE5YTciLCJwIjoiaiJ9
 
 - **Backlog düzeni ve Story seçimleri**: Backlog'umuz oluşturduğumuz epic'lerdeki story'lere göre düzenlenmiştir. 
-Story'ler yapılacak işlere sub-task'lara bölünmüştür. 
+Story'ler yapılacak işlere sub-task'lara bölünmüştür. Sprint'ler tamamlandıkça yeni sprint'in bakcloguna geçilir. 
 ---
 **Board Düzeni**: 
 - Turuncu Simge: Zahid Nabi Çelik
@@ -96,6 +96,12 @@ Story'ler yapılacak işlere sub-task'lara bölünmüştür.
 - <img width="2561" height="7354" alt="Sprint2_Board3" src="https://github.com/user-attachments/assets/ae78300b-b753-4a73-87ae-4f849f07a25a" />
 
 - **Ürün Durumu**:
+- <img width="496" height="1020" alt="Hesap_olusturma_ekrani" src="https://github.com/user-attachments/assets/be11eb9a-6107-4da8-bf19-567f2d68e57b" />
+- <img width="496" height="1020" alt="Giris_ekrani" src="https://github.com/user-attachments/assets/55156d2f-ff33-4779-90eb-f74936313f43" />
+- <img width="500" height="1015" alt="Ozet_ekrani" src="https://github.com/user-attachments/assets/c21143a1-2d9a-4e0c-a461-b96ac994270a" />
+- <img width="505" height="1017" alt="Tarla_ekleme_ekrani" src="https://github.com/user-attachments/assets/d603e78f-a1b1-4099-9c5d-f2d0bb4de3fc" />
+- <img width="500" height="1015" alt="Risk_harita_ekrani" src="https://github.com/user-attachments/assets/f2477de9-f42d-4574-9f98-21c4fa1b1c07" />
+- <img width="501" height="1022" alt="Profil_ayarlar" src="https://github.com/user-attachments/assets/40c0b511-e3a1-4071-9399-59e619f45b92" />
 
 - **Sprint Review**:
 - Tarla Gözcüsü projemizin backend entegrasyonu, karar destek algoritmaları ve mobil uygulama arayüzlerini geliştirdiğimiz Sprint 2'yi, tüm hedeflerimizi ve planlanan Jira görevlerimizi eksiksiz tamamlayarak başarıyla kapattık. Bir önceki sprintten devraldığımız koordinat bazlı OpenWeatherMap API entegrasyonunu tamamlayarak sisteme dahil ettik. Karar destek algoritmaları tarafında, FAO-56 Penman-Monteith denklemini temel alan günlük optimal sulama ihtiyacı modelini ve birinci derece reaksiyon kinetiğiyle çalışan NPK gübre yıkanma (leaching) modelini geliştirdik. Merkezi API sunucumuz olan FastAPI üzerinde; bu matematiksel modelleri, PostgreSQL (SQLAlchemy) veritabanı persistence katmanını, EfficientNet-B2 TFLite yaprak hastalığı teşhis modelini ve Google Gemini API entegrasyonlu proaktif Terra AI karar destek asistanını bir araya getirdik. Ayrıca, tüm bu servislerin entegrasyonunu kolaylaştırmak amacıyla istek/yanıt şemalarını içeren kapsamlı API dokümantasyonunu backend/README.md dosyamıza ekledik. Mobil tarafta ise Flutter uygulamamızın; Dashboard, Leaf Disease Diagnosis, Giriş/Kayıt, Optimizasyon Detayları, Risk Haritası ve Terra Chat ekranlarını tamamlayarak ApiService üzerinden backend servisleriyle entegre ettik. (taslak)
