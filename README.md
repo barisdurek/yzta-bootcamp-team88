@@ -38,8 +38,8 @@ Tarla Gözcüsü
 
 Jira Backlog URL: https://zahidnabicelik.atlassian.net/jira/software/projects/E88/boards/133/backlog?atlOrigin=eyJpIjoiNmRiZmM1MmU4MjY2NGVlM2JiMjQxODFiOTU1MzE5YTciLCJwIjoiaiJ9
 
-- **Backlog düzeni ve Story seçimleri**: Backlog'umuz oluşturduğumuz epic'lerdeki story'lere göre düzenlenmiştir. 
-Story'ler yapılacak işlere sub-task'lara bölünmüştür. Sprint'ler tamamlandıkça yeni sprint'in bakcloguna geçilir. 
+- **Backlog düzeni ve Story seçimleri**: Backlog'umuz oluşturduğumuz epic'lerdeki story'lere göre düzenlenmiştir.
+Story'ler yapılacak işlere sub-task'lara bölünmüştür. Sprint'ler tamamlandıkça yeni sprintin backloguna geçilir. 
 ---
 **Board Düzeni**: 
 - Turuncu Simge: Zahid Nabi Çelik
