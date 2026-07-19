@@ -31,13 +31,13 @@ Tarla Gözcüsü
 - Tarımsal girdi maliyetlerini (su, gübre, ilaç) optimize etmek isteyen ticari üreticiler ve çiftçiler
 - Hobi amaçlı tarıma yönelen, veri odaklı karar almayı tercih eden her yaştan telefon sahibi kullanıcılar
 - Teknolojik tarım asistanlarına entegre olmaya açık tüm tarım sektörü paydaşları
+## Work (Epic) LIST URL
+- https://zahidnabicelik.atlassian.net/jira/software/projects/E88/list?jql=project%20%3D%20E88%20ORDER%20BY%20cf%5B10019%5D%20ASC
 
 ## Product Backlog URL
 
 Jira Backlog URL: https://zahidnabicelik.atlassian.net/jira/software/projects/E88/boards/133/backlog?atlOrigin=eyJpIjoiNmRiZmM1MmU4MjY2NGVlM2JiMjQxODFiOTU1MzE5YTciLCJwIjoiaiJ9
 
-## Work (Epic) LIST URL
-- https://zahidnabicelik.atlassian.net/jira/software/projects/E88/list?jql=project%20%3D%20E88%20ORDER%20BY%20cf%5B10019%5D%20ASC
 - **Backlog düzeni ve Story seçimleri**: Backlog'umuz oluşturduğumuz epic'lerdeki story'lere göre düzenlenmiştir. 
 Story'ler yapılacak işlere sub-task'lara bölünmüştür. Sprint'ler tamamlandıkça yeni sprint'in bakcloguna geçilir. 
 ---
