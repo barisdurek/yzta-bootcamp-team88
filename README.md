@@ -90,7 +90,7 @@ Story'ler yapılacak işlere sub-task'lara bölünmüştür. Sprint'ler tamamlan
 - <img width="788" height="320" alt="DailyScrum 1" src="https://github.com/user-attachments/assets/917fe3d4-bc4c-466d-be58-885b182eb163" />
 - <img width="793" height="473" alt="DailyScrum 2" src="https://github.com/user-attachments/assets/22d1e101-2395-461d-8547-3b622218fe6d" />
 
-- **Sprint board update**: Sprint board screenshotları:
+- **Sprint board update (screenshotlar)**: 
 - <img width="2561" height="7591" alt="Sprint2_Board1" src="https://github.com/user-attachments/assets/85ea4c45-d79a-4c20-a337-58a7f24c5b45" />
 - <img width="2561" height="7132" alt="Sprint2_Board2" src="https://github.com/user-attachments/assets/d76a8503-6d09-4d8e-aedd-7f4fc1a1ffc5" />
 - <img width="2561" height="7354" alt="Sprint2_Board3" src="https://github.com/user-attachments/assets/ae78300b-b753-4a73-87ae-4f849f07a25a" />
@@ -116,7 +116,7 @@ Story'ler yapılacak işlere sub-task'lara bölünmüştür. Sprint'ler tamamlan
 
 - **Daily Scrum**:
 
-- **Sprint board update**: Sprint board screenshotları:
+- **Sprint board update (screenshotlar)**: 
  
 - **Ürün Durumu**:
 
