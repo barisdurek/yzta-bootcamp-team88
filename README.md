@@ -115,7 +115,11 @@ Story'ler yapılacak işlere sub-task'lara bölünmüştür. Sprint'ler tamamlan
 <summary> <h2>Sprint 3</h2> </summary>
 <br>
 
-- **Daily Scrum**:
+ - **Backlog**:
+ - <img width="1018" height="364" alt="image" src="https://github.com/user-attachments/assets/9009fe44-62c0-4e51-bcdf-3b4a682ca305" />
+
+
+ - **Daily Scrum**:
 
 - **Sprint board update (screenshotlar)**: 
  
