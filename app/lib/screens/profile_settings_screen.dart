@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import '../database/database_helper.dart';
-import '../services/api_service.dart';
+import '../utils/turkey_cities.dart';
 
 class ProfileSettingsScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -14,19 +16,22 @@ class ProfileSettingsScreen extends StatefulWidget {
 }
 
 class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
-  final TextEditingController _urlController = TextEditingController();
   late Map<String, dynamic> _currentUser;
   
   List<Map<String, dynamic>> _userFields = [];
   Map<int, Map<String, dynamic>> _fieldCrops = {};
   bool _loadingFields = true;
-  String _selectedLanguage = 'tr';
+
+  // Notification Toggles
+  bool _notifyDiseases = true;
+  bool _notifyIrrigation = true;
+  bool _notifyWeather = true;
+  bool _notifyAiTips = true;
 
   @override
   void initState() {
     super.initState();
     _currentUser = Map<String, dynamic>.from(widget.user);
-    _urlController.text = ApiService.instance.baseUrl;
     _loadFieldsData();
   }
 
@@ -57,14 +62,9 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
             _loadingFields = false;
           });
         }
-      } else {
-        if (mounted) {
-          setState(() {
-            _loadingFields = false;
-          });
-        }
       }
     } catch (e) {
+      print("Fields load error: $e");
       if (mounted) {
         setState(() {
           _loadingFields = false;
@@ -73,26 +73,190 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     }
   }
 
-  void _saveUrlSetting() {
-    final url = _urlController.text.trim();
-    if (url.isNotEmpty) {
-      ApiService.instance.updateBaseUrl(url);
-      widget.onUrlUpdated();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Backend API adresi başarıyla güncellendi!'),
-          backgroundColor: Color(0xFF4A7C59),
-        ),
-      );
+  // Pick profile photo from gallery or camera
+  Future<void> _pickProfilePhoto() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (picked != null) {
+      final updatedUser = Map<String, dynamic>.from(_currentUser);
+      updatedUser['image_path'] = picked.path;
+
+      await DatabaseHelper.instance.updateUser(updatedUser);
+      setState(() {
+        _currentUser = updatedUser;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profil fotoğrafınız başarıyla güncellendi!'),
+            backgroundColor: Color(0xFF4A7C59),
+          ),
+        );
+      }
     }
   }
 
-  // Edit Profile Dialog
+  // Edit Profile Info Dialog
   void _showEditProfileDialog() {
-    final nameCtrl = TextEditingController(text: _currentUser['name']);
+    final nameCtrl = TextEditingController(text: _currentUser['name'] ?? '');
     final phoneCtrl = TextEditingController(text: _currentUser['phone'] ?? '');
-    final cityCtrl = TextEditingController(text: _currentUser['city'] ?? 'Konya');
-    final districtCtrl = TextEditingController(text: _currentUser['district'] ?? 'Karatay');
+    String? selectedCity = _currentUser['city'] != null && _currentUser['city'].toString().isNotEmpty
+        ? _currentUser['city']
+        : 'Konya';
+    String? selectedDistrict = _currentUser['district'] != null && _currentUser['district'].toString().isNotEmpty
+        ? _currentUser['district']
+        : 'Karatay';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final districts = selectedCity != null ? TurkeyCities.getDistrictsForCity(selectedCity!) : <String>[];
+            if (selectedDistrict != null && !districts.contains(selectedDistrict)) {
+              selectedDistrict = districts.isNotEmpty ? districts.first : null;
+            }
+
+            final avatarPath = _currentUser['image_path']?.toString();
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text(
+                'Profili Düzenle',
+                style: GoogleFonts.literata(fontWeight: FontWeight.bold, color: const Color(0xFF4A7C59)),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GestureDetector(
+                      onTap: () async {
+                        await _pickProfilePhoto();
+                        setDialogState(() {});
+                      },
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          ClipOval(
+                            child: avatarPath != null && avatarPath.isNotEmpty && File(avatarPath).existsSync()
+                                ? Image.file(
+                                    File(avatarPath),
+                                    key: ValueKey(avatarPath),
+                                    width: 72,
+                                    height: 72,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.network(
+                                    'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&q=80&w=200',
+                                    width: 72,
+                                    height: 72,
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(color: Color(0xFF4A7C59), shape: BoxShape.circle),
+                            child: const Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                          )
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: nameCtrl,
+                      decoration: const InputDecoration(labelText: 'Ad Soyad', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: phoneCtrl,
+                      decoration: const InputDecoration(labelText: 'Telefon Numarası', border: OutlineInputBorder()),
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    // City Dropdown
+                    DropdownButtonFormField<String>(
+                      value: selectedCity,
+                      decoration: const InputDecoration(labelText: 'İl (Şehir)', border: OutlineInputBorder()),
+                      items: TurkeyCities.getCities.map((city) {
+                        return DropdownMenuItem(value: city, child: Text(city));
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDialogState(() {
+                            selectedCity = val;
+                            selectedDistrict = TurkeyCities.getDistrictsForCity(val).first;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // District Dropdown
+                    DropdownButtonFormField<String>(
+                      value: selectedDistrict,
+                      decoration: const InputDecoration(labelText: 'İlçe', border: OutlineInputBorder()),
+                      items: districts.map((dist) {
+                        return DropdownMenuItem(value: dist, child: Text(dist));
+                      }).toList(),
+                      onChanged: selectedCity == null
+                          ? null
+                          : (val) {
+                              setDialogState(() {
+                                selectedDistrict = val;
+                              });
+                            },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('İptal', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4A7C59), foregroundColor: Colors.white),
+                  onPressed: () async {
+                    final name = nameCtrl.text.trim();
+                    final phone = phoneCtrl.text.trim();
+
+                    if (name.isNotEmpty) {
+                      final updatedUser = Map<String, dynamic>.from(_currentUser);
+                      updatedUser['name'] = name;
+                      updatedUser['phone'] = phone;
+                      updatedUser['city'] = selectedCity ?? 'Konya';
+                      updatedUser['district'] = selectedDistrict ?? 'Karatay';
+
+                      await DatabaseHelper.instance.updateUser(updatedUser);
+                      
+                      setState(() {
+                        _currentUser = updatedUser;
+                      });
+                      
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Profil bilgileri güncellendi!'), backgroundColor: Color(0xFF4A7C59)),
+                      );
+                      _loadFieldsData();
+                    }
+                  },
+                  child: const Text('Kaydet'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Change Password Dialog
+  void _showChangePasswordDialog() {
+    final currentPassCtrl = TextEditingController();
+    final newPassCtrl = TextEditingController();
+    final confirmPassCtrl = TextEditingController();
 
     showDialog(
       context: context,
@@ -100,7 +264,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
-            'Profili Düzenle',
+            'Güvenlik ve Şifre Güncelleme',
             style: GoogleFonts.literata(fontWeight: FontWeight.bold, color: const Color(0xFF4A7C59)),
           ),
           content: SingleChildScrollView(
@@ -108,24 +272,21 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
-                  controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Ad Soyad', border: OutlineInputBorder()),
+                  controller: currentPassCtrl,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Mevcut Şifre', border: OutlineInputBorder()),
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  controller: phoneCtrl,
-                  decoration: const InputDecoration(labelText: 'Telefon Numarası', border: OutlineInputBorder()),
-                  keyboardType: TextInputType.phone,
+                  controller: newPassCtrl,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Yeni Şifre', border: OutlineInputBorder()),
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  controller: cityCtrl,
-                  decoration: const InputDecoration(labelText: 'Şehir', border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: districtCtrl,
-                  decoration: const InputDecoration(labelText: 'İlçe', border: OutlineInputBorder()),
+                  controller: confirmPassCtrl,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Yeni Şifre Tekrar', border: OutlineInputBorder()),
                 ),
               ],
             ),
@@ -138,32 +299,43 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4A7C59), foregroundColor: Colors.white),
               onPressed: () async {
-                final name = nameCtrl.text.trim();
-                final phone = phoneCtrl.text.trim();
-                final city = cityCtrl.text.trim();
-                final district = districtCtrl.text.trim();
+                final current = currentPassCtrl.text;
+                final newPass = newPassCtrl.text;
+                final confirmPass = confirmPassCtrl.text;
 
-                if (name.isNotEmpty) {
-                  final updatedUser = Map<String, dynamic>.from(_currentUser);
-                  updatedUser['name'] = name;
-                  updatedUser['phone'] = phone;
-                  updatedUser['city'] = city;
-                  updatedUser['district'] = district;
+                final realPass = _currentUser['password'] ?? '';
+                if (current != realPass) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Mevcut şifreniz hatalı!'), backgroundColor: Color(0xFFB83230)),
+                  );
+                  return;
+                }
+                if (newPass.length < 4) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Yeni şifreniz en az 4 karakter olmalıdır.'), backgroundColor: Color(0xFFB83230)),
+                  );
+                  return;
+                }
+                if (newPass != confirmPass) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Yeni şifreler uyuşmuyor!'), backgroundColor: Color(0xFFB83230)),
+                  );
+                  return;
+                }
 
-                  await DatabaseHelper.instance.updateUser(updatedUser);
-                  
+                final userId = _currentUser['id'] as int?;
+                if (userId != null) {
+                  await DatabaseHelper.instance.updateUserPassword(userId, newPass);
                   setState(() {
-                    _currentUser = updatedUser;
+                    _currentUser['password'] = newPass;
                   });
-                  
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Profil bilgileri güncellendi!'), backgroundColor: Color(0xFF4A7C59)),
+                    const SnackBar(content: Text('Şifreniz başarıyla güncellendi!'), backgroundColor: Color(0xFF4A7C59)),
                   );
-                  _loadFieldsData(); // Reload fields to display updated city/district if changed
                 }
               },
-              child: const Text('Kaydet'),
+              child: const Text('Şifreyi Güncelle'),
             ),
           ],
         );
@@ -171,12 +343,16 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     );
   }
 
-  // Quick Add Field Dialog from Profile Screen
+  // Quick Add Field Dialog
   void _showAddFieldDialog() {
     final nameCtrl = TextEditingController();
     final areaCtrl = TextEditingController();
-    final cityCtrl = TextEditingController(text: _currentUser['city'] ?? 'Konya');
-    final districtCtrl = TextEditingController(text: _currentUser['district'] ?? 'Karatay');
+    String? selectedCity = _currentUser['city'] != null && _currentUser['city'].toString().isNotEmpty
+        ? _currentUser['city']
+        : 'Konya';
+    String? selectedDistrict = _currentUser['district'] != null && _currentUser['district'].toString().isNotEmpty
+        ? _currentUser['district']
+        : 'Karatay';
     
     String selectedSoil = 'Tınlı';
     int selectedCropId = 1; // Tomato by default
@@ -186,6 +362,11 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final districts = selectedCity != null ? TurkeyCities.getDistrictsForCity(selectedCity!) : <String>[];
+            if (selectedDistrict != null && !districts.contains(selectedDistrict)) {
+              selectedDistrict = districts.isNotEmpty ? districts.first : null;
+            }
+
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               title: Text(
@@ -207,14 +388,39 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: cityCtrl,
-                      decoration: const InputDecoration(labelText: 'Şehir', border: OutlineInputBorder()),
+                    
+                    // City Dropdown
+                    DropdownButtonFormField<String>(
+                      value: selectedCity,
+                      decoration: const InputDecoration(labelText: 'İl (Şehir)', border: OutlineInputBorder()),
+                      items: TurkeyCities.getCities.map((city) {
+                        return DropdownMenuItem(value: city, child: Text(city));
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDialogState(() {
+                            selectedCity = val;
+                            selectedDistrict = TurkeyCities.getDistrictsForCity(val).first;
+                          });
+                        }
+                      },
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: districtCtrl,
+
+                    // District Dropdown
+                    DropdownButtonFormField<String>(
+                      value: selectedDistrict,
                       decoration: const InputDecoration(labelText: 'İlçe', border: OutlineInputBorder()),
+                      items: districts.map((dist) {
+                        return DropdownMenuItem(value: dist, child: Text(dist));
+                      }).toList(),
+                      onChanged: selectedCity == null
+                          ? null
+                          : (val) {
+                              setDialogState(() {
+                                selectedDistrict = val;
+                              });
+                            },
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
@@ -242,7 +448,6 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                         DropdownMenuItem(value: 1, child: Text('Domates')),
                         DropdownMenuItem(value: 2, child: Text('Patates')),
                         DropdownMenuItem(value: 3, child: Text('Biber')),
-                        DropdownMenuItem(value: 4, child: Text('Mısır')),
                       ],
                       onChanged: (val) {
                         if (val != null) {
@@ -265,43 +470,51 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                   onPressed: () async {
                     final name = nameCtrl.text.trim();
                     final area = double.tryParse(areaCtrl.text.trim()) ?? 10.0;
-                    final city = cityCtrl.text.trim();
-                    final district = districtCtrl.text.trim();
 
-                    if (name.isNotEmpty) {
+                    if (name.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Lütfen tarla adını giriniz.'), backgroundColor: Color(0xFFB83230)),
+                      );
+                      return;
+                    }
+
+                    try {
                       final db = DatabaseHelper.instance;
-                      // 1. Insert field
+                      final userId = (_currentUser['id'] ?? _currentUser['user_id'] ?? 1) as int;
+
                       final fid = await db.insertField({
-                        'user_id': _currentUser['id'],
-                        'field_name': name,
-                        'province': city,
-                        'district': district,
-                        'area_m2': area * 1000, // Dekar to m2
+                        'name': name,
+                        'user_id': userId,
+                        'city': selectedCity ?? 'Konya',
+                        'district': selectedDistrict ?? 'Karatay',
+                        'area': area,
                         'soil_type': selectedSoil,
                         'irrigation_type': 'Damlama',
-                        'created_at': DateTime.now().toIso8601String(),
-                        'updated_at': DateTime.now().toIso8601String(),
+                        'latitude': 37.87,
+                        'longitude': 32.49,
                       });
 
-                      // 2. Insert field_crop active relation
                       await db.insertFieldCrop({
                         'field_id': fid,
                         'crop_id': selectedCropId,
-                        'planting_date': DateTime.now().toIso8601String().split('T')[0],
-                        'growth_stage': 'Gelişme Dönemi',
+                        'planting_date': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+                        'growth_stage': 'Vejetatif',
                         'is_active': 1,
-                        'created_at': DateTime.now().toIso8601String(),
-                        'updated_at': DateTime.now().toIso8601String(),
                       });
 
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Yeni tarla başarıyla eklendi!'), backgroundColor: Color(0xFF4A7C59)),
+                        SnackBar(content: Text('Yeni tarla başarıyla eklendi: $name'), backgroundColor: const Color(0xFF4A7C59)),
                       );
                       _loadFieldsData();
+                    } catch (e) {
+                      print("Add field error: $e");
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Tarla eklenirken bir hata oluştu: $e'), backgroundColor: const Color(0xFFB83230)),
+                      );
                     }
                   },
-                  child: const Text('Ekle'),
+                  child: const Text('Kaydet'),
                 ),
               ],
             );
@@ -311,146 +524,477 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     );
   }
 
-  // Get field image based on crop type
+  // Field Action Dialog (Edit / Delete)
+  void _showFieldOptionsDialog(Map<String, dynamic> field, Map<String, dynamic>? activeCrop) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  field['name'] ?? field['field_name'] ?? 'Tarla İşlemleri',
+                  style: GoogleFonts.literata(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF2E3230)),
+                ),
+                const SizedBox(height: 8),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.edit_outlined, color: Color(0xFF4A7C59)),
+                  title: const Text('Araziyi Düzenle'),
+                  subtitle: const Text('İsim, alan, şehir, ilçe veya ürün bilgisini güncelle'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showEditFieldDialog(field, activeCrop);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: Color(0xFFB83230)),
+                  title: const Text('Araziyi Sil', style: TextStyle(color: Color(0xFFB83230), fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Bu tarlayı ve bağlı tüm kayıtları siler'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _confirmDeleteField(field);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Edit Existing Field Dialog
+  void _showEditFieldDialog(Map<String, dynamic> field, Map<String, dynamic>? activeCrop) {
+    final nameCtrl = TextEditingController(text: field['name'] ?? field['field_name'] ?? '');
+    final double initialArea = (field['area'] as num?)?.toDouble() ?? (((field['area_m2'] as num?)?.toDouble() ?? 0.0) / 1000.0);
+    final areaCtrl = TextEditingController(text: initialArea.toStringAsFixed(1));
+
+    String? selectedCity = field['city'] ?? field['province'] ?? 'Konya';
+    String? selectedDistrict = field['district'] ?? 'Karatay';
+    String selectedSoil = field['soil_type'] ?? 'Tınlı';
+    int selectedCropId = activeCrop != null ? (activeCrop['id'] as int? ?? 1) : 1;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final districts = selectedCity != null ? TurkeyCities.getDistrictsForCity(selectedCity!) : <String>[];
+            if (selectedDistrict != null && !districts.contains(selectedDistrict)) {
+              selectedDistrict = districts.isNotEmpty ? districts.first : null;
+            }
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text(
+                'Araziyi Düzenle',
+                style: GoogleFonts.literata(fontWeight: FontWeight.bold, color: const Color(0xFF4A7C59)),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameCtrl,
+                      decoration: const InputDecoration(labelText: 'Tarla Adı', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: areaCtrl,
+                      decoration: const InputDecoration(labelText: 'Alan (Dekar)', border: OutlineInputBorder()),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // City Dropdown
+                    DropdownButtonFormField<String>(
+                      value: selectedCity,
+                      decoration: const InputDecoration(labelText: 'İl (Şehir)', border: OutlineInputBorder()),
+                      items: TurkeyCities.getCities.map((city) {
+                        return DropdownMenuItem(value: city, child: Text(city));
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDialogState(() {
+                            selectedCity = val;
+                            selectedDistrict = TurkeyCities.getDistrictsForCity(val).first;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // District Dropdown
+                    DropdownButtonFormField<String>(
+                      value: selectedDistrict,
+                      decoration: const InputDecoration(labelText: 'İlçe', border: OutlineInputBorder()),
+                      items: districts.map((dist) {
+                        return DropdownMenuItem(value: dist, child: Text(dist));
+                      }).toList(),
+                      onChanged: selectedCity == null
+                          ? null
+                          : (val) {
+                              setDialogState(() {
+                                selectedDistrict = val;
+                              });
+                            },
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: selectedSoil,
+                      decoration: const InputDecoration(labelText: 'Toprak Tipi', border: OutlineInputBorder()),
+                      items: const [
+                        DropdownMenuItem(value: 'Killi', child: Text('Killi')),
+                        DropdownMenuItem(value: 'Tınlı', child: Text('Tınlı')),
+                        DropdownMenuItem(value: 'Kumlu', child: Text('Kumlu')),
+                        DropdownMenuItem(value: 'Kireçli', child: Text('Kireçli')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDialogState(() {
+                            selectedSoil = val;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      value: selectedCropId,
+                      decoration: const InputDecoration(labelText: 'Ekili Ürün', border: OutlineInputBorder()),
+                      items: const [
+                        DropdownMenuItem(value: 1, child: Text('Domates')),
+                        DropdownMenuItem(value: 2, child: Text('Patates')),
+                        DropdownMenuItem(value: 3, child: Text('Biber')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDialogState(() {
+                            selectedCropId = val;
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('İptal', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4A7C59), foregroundColor: Colors.white),
+                  onPressed: () async {
+                    final name = nameCtrl.text.trim();
+                    final area = double.tryParse(areaCtrl.text.trim()) ?? initialArea;
+                    final fid = field['id'] as int;
+
+                    if (name.isNotEmpty && selectedCity != null && selectedDistrict != null) {
+                      final updatedField = Map<String, dynamic>.from(field);
+                      updatedField['name'] = name;
+                      updatedField['area'] = area;
+                      updatedField['city'] = selectedCity;
+                      updatedField['district'] = selectedDistrict;
+                      updatedField['soil_type'] = selectedSoil;
+
+                      final db = DatabaseHelper.instance;
+                      await db.updateField(updatedField);
+                      await db.updateFieldCropRelation(fid, selectedCropId);
+
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Tarla bilgileri başarıyla güncellendi!'), backgroundColor: Color(0xFF4A7C59)),
+                      );
+                      _loadFieldsData();
+                    }
+                  },
+                  child: const Text('Güncelle'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Delete Confirmation Dialog
+  void _confirmDeleteField(Map<String, dynamic> field) {
+    final fid = field['id'] as int;
+    final name = field['name'] ?? field['field_name'] ?? 'Tarla';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Araziyi Sil', style: GoogleFonts.literata(fontWeight: FontWeight.bold, color: const Color(0xFFB83230))),
+          content: Text(
+            '"$name" tarlasını ve bağlı tüm geçmiş sulama, hava durumu ve teşhis kayıtlarını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+            style: GoogleFonts.nunitoSans(fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('İptal', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB83230), foregroundColor: Colors.white),
+              onPressed: () async {
+                await DatabaseHelper.instance.deleteField(fid);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('"$name" tarlası başarıyla silindi.'), backgroundColor: const Color(0xFFB83230)),
+                );
+                _loadFieldsData();
+              },
+              child: const Text('Evet, Sil'),
+            )
+          ],
+        );
+      },
+    );
+  }
+
+  void _showNotificationSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text(
+                'Anlık Bildirim Tercihleri',
+                style: GoogleFonts.literata(fontWeight: FontWeight.bold, color: const Color(0xFF4A7C59)),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SwitchListTile(
+                      activeThumbColor: const Color(0xFF4A7C59),
+                      title: Text('🦠 Hastalık & Salgın Uyarıları', style: GoogleFonts.nunitoSans(fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: Text('Bölgesel hastalık tespiti ve proaktif sprey uyarısı', style: GoogleFonts.nunitoSans(fontSize: 12)),
+                      value: _notifyDiseases,
+                      onChanged: (val) {
+                        setDialogState(() => _notifyDiseases = val);
+                        setState(() => _notifyDiseases = val);
+                      },
+                    ),
+                    const Divider(height: 1),
+                    SwitchListTile(
+                      activeThumbColor: const Color(0xFF4A7C59),
+                      title: Text('💧 Akıllı Sulama Hatırlatıcıları', style: GoogleFonts.nunitoSans(fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: Text('Toprak nem düşüşü ve optimal sulama vakti bildirimi', style: GoogleFonts.nunitoSans(fontSize: 12)),
+                      value: _notifyIrrigation,
+                      onChanged: (val) {
+                        setDialogState(() => _notifyIrrigation = val);
+                        setState(() => _notifyIrrigation = val);
+                      },
+                    ),
+                    const Divider(height: 1),
+                    SwitchListTile(
+                      activeThumbColor: const Color(0xFF4A7C59),
+                      title: Text('⚡ Don & Aşırı Hava Olayı Uyarısı', style: GoogleFonts.nunitoSans(fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: Text('Gece sıcaklık düşüşü, fırtına ve yağış ihtimali', style: GoogleFonts.nunitoSans(fontSize: 12)),
+                      value: _notifyWeather,
+                      onChanged: (val) {
+                        setDialogState(() => _notifyWeather = val);
+                        setState(() => _notifyWeather = val);
+                      },
+                    ),
+                    const Divider(height: 1),
+                    SwitchListTile(
+                      activeThumbColor: const Color(0xFF4A7C59),
+                      title: Text('🤖 Terra AI İpuçları', style: GoogleFonts.nunitoSans(fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: Text('Haftalık ürün bakımı, gübreleme ve verim tavsiyeleri', style: GoogleFonts.nunitoSans(fontSize: 12)),
+                      value: _notifyAiTips,
+                      onChanged: (val) {
+                        setDialogState(() => _notifyAiTips = val);
+                        setState(() => _notifyAiTips = val);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4A7C59), foregroundColor: Colors.white),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Bildirim tercihleri güncellendi!'), backgroundColor: Color(0xFF4A7C59)),
+                    );
+                  },
+                  child: const Text('Kaydet ve Kapat'),
+                )
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showDialogInfo(String title, String content) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(title, style: GoogleFonts.literata(fontWeight: FontWeight.bold, color: const Color(0xFF4A7C59))),
+          content: Text(content, style: GoogleFonts.nunitoSans()),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Tamam', style: TextStyle(color: Color(0xFF4A7C59))),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   String _getFieldImage(String cropName) {
-    switch (cropName.toLowerCase()) {
-      case 'domates':
-        return 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&q=80&w=200';
-      case 'patates':
-        return 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&q=80&w=200';
-      case 'biber':
-        return 'https://images.unsplash.com/photo-1592417817098-8f3d6eb19675?auto=format&fit=crop&q=80&w=200';
-      case 'mısır':
-        return 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&q=80&w=200';
-      default:
-        return 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=200';
+    final name = cropName.toLowerCase();
+    if (name.contains('domates')) {
+      return 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?auto=format&fit=crop&q=80&w=300';
+    } else if (name.contains('patates')) {
+      return 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&q=80&w=300';
+    } else if (name.contains('biber')) {
+      return 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?auto=format&fit=crop&q=80&w=300';
     }
+    return 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=300';
   }
 
   @override
   Widget build(BuildContext context) {
-    final double totalHectares = _userFields.fold(0.0, (sum, f) => sum + (((f['area_m2'] as num?)?.toDouble() ?? 0.0) / 10000.0));
-    final double totalDekars = totalHectares * 10;
+    final userImgPath = _currentUser['image_path']?.toString();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header
-          Text(
-            'Profil ve Ayarlar',
-            style: GoogleFonts.literata(fontSize: 22, fontWeight: FontWeight.bold, color: const Color(0xFF4A7C59)),
-          ),
-          const SizedBox(height: 16),
-
-          // 1. User Profile Hero Section with Gold Hour mesh styling
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF4A7C59).withOpacity(0.15)),
-              gradient: const LinearGradient(
-                colors: [Color(0xFFE8F6EC), Color(0xFFFAF2DF)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF2E3230).withOpacity(0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                )
-              ]
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    // Profile Image Frame
-                    Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
-                      ),
-                      child: ClipOval(
-                        child: Image.network(
-                          'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&q=80&w=200',
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            width: 80,
-                            height: 80,
-                            color: const Color(0xFFC8E8D0),
-                            child: const Icon(Icons.person, size: 40, color: Color(0xFF4A7C59)),
-                          ),
+          // 1. User Header Bento Card
+          Card(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            elevation: 1,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: _pickProfilePhoto,
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: const Color(0xFF4A7C59), width: 2),
+                              ),
+                              child: ClipOval(
+                                child: userImgPath != null && userImgPath.isNotEmpty && File(userImgPath).existsSync()
+                                    ? Image.file(
+                                        File(userImgPath),
+                                        key: ValueKey(userImgPath),
+                                        width: 76,
+                                        height: 76,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.network(
+                                        'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&q=80&w=200',
+                                        width: 76,
+                                        height: 76,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => Container(
+                                          width: 76,
+                                          height: 76,
+                                          color: const Color(0xFFC8E8D0),
+                                          child: const Icon(Icons.person, size: 40, color: Color(0xFF4A7C59)),
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.all(5),
+                              decoration: const BoxDecoration(color: Color(0xFF4A7C59), shape: BoxShape.circle),
+                              child: const Icon(Icons.camera_alt, color: Colors.white, size: 12),
+                            )
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _currentUser['name'] ?? 'Üretici',
-                            style: GoogleFonts.literata(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF2E3230)),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _currentUser['role'] ?? 'Mühendis Çiftçi',
-                            style: GoogleFonts.nunitoSans(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF4A7C59)),
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              const Icon(Icons.mail_outline, size: 14, color: Color(0xFF6B6358)),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  _currentUser['email'] ?? '',
-                                  style: GoogleFonts.nunitoSans(fontSize: 12, color: const Color(0xFF6B6358)),
-                                  overflow: TextOverflow.ellipsis,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _currentUser['name'] ?? 'Üretici',
+                              style: GoogleFonts.literata(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF2E3230)),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _currentUser['role'] ?? 'Mühendis Çiftçi',
+                              style: GoogleFonts.nunitoSans(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF4A7C59)),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                const Icon(Icons.mail_outline, size: 14, color: Color(0xFF6B6358)),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    _currentUser['email'] ?? '',
+                                    style: GoogleFonts.nunitoSans(fontSize: 12, color: const Color(0xFF6B6358)),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              const Icon(Icons.phone_outlined, size: 14, color: Color(0xFF6B6358)),
-                              const SizedBox(width: 6),
-                              Text(
-                                _currentUser['phone'] != null && _currentUser['phone'].toString().isNotEmpty
-                                    ? _currentUser['phone']
-                                    : '+90 (555) 000 00 00',
-                                style: GoogleFonts.nunitoSans(fontSize: 12, color: const Color(0xFF6B6358)),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4A7C59),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    onPressed: _showEditProfileDialog,
-                    child: Text('Profili Düzenle', style: GoogleFonts.nunitoSans(fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                const Icon(Icons.location_city_outlined, size: 14, color: Color(0xFF6B6358)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${_currentUser['city'] ?? 'Konya'} / ${_currentUser['district'] ?? 'Karatay'}',
+                                  style: GoogleFonts.nunitoSans(fontSize: 12, color: const Color(0xFF6B6358)),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      )
+                    ],
                   ),
-                )
-              ],
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF4A7C59),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: _showEditProfileDialog,
+                      child: Text('Profili Düzenle', style: GoogleFonts.nunitoSans(fontWeight: FontWeight.bold)),
+                    ),
+                  )
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -495,140 +1039,98 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                         final fid = field['id'] as int;
                         final activeCrop = _fieldCrops[fid];
                         final cropName = activeCrop != null ? activeCrop['name'] ?? 'Ürün' : 'Ekili Ürün';
-                        final double sizeDekar = ((field['area_m2'] as num?)?.toDouble() ?? 0.0) / 1000.0;
+                        final double sizeDekar = (field['area'] as num?)?.toDouble() ?? (((field['area_m2'] as num?)?.toDouble() ?? 0.0) / 1000.0);
                         final String img = _getFieldImage(cropName);
 
-                        return Container(
-                          margin: const EdgeInsets.symmetric(vertical: 6),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _showFieldOptionsDialog(field, activeCrop),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFC4C8BC).withOpacity(0.2)),
-                            boxShadow: [
-                              BoxShadow(color: const Color(0xFF2E3230).withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 2))
-                            ]
-                          ),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  img,
-                                  width: 60,
-                                  height: 60,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => Container(
-                                    width: 60,
-                                    height: 60,
-                                    color: const Color(0xFFE8F6EC),
-                                    child: const Icon(Icons.wb_sunny, color: Color(0xFF4A7C59)),
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(vertical: 6),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFC4C8BC).withOpacity(0.2)),
+                                boxShadow: [
+                                  BoxShadow(color: const Color(0xFF2E3230).withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 2))
+                                ]
+                              ),
+                              child: Row(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      img,
+                                      width: 60,
+                                      height: 60,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => Container(
+                                        width: 60,
+                                        height: 60,
+                                        color: const Color(0xFFE8F6EC),
+                                        child: const Icon(Icons.wb_sunny, color: Color(0xFF4A7C59)),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      field['field_name'] ?? 'İsimsiz Tarla',
-                                      style: GoogleFonts.literata(fontWeight: FontWeight.bold, fontSize: 15, color: const Color(0xFF2E3230)),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '${field['province']}, ${field['district']} • ${sizeDekar.toStringAsFixed(1)} Dekar',
-                                      style: GoogleFonts.nunitoSans(fontSize: 12, color: const Color(0xFF6B6358)),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFE8F6EC),
-                                            borderRadius: BorderRadius.circular(4),
-                                          ),
-                                          child: Text(
-                                            cropName.toUpperCase(),
-                                            style: GoogleFonts.nunitoSans(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF2A6038)),
-                                          ),
+                                        Text(
+                                          field['name'] ?? field['field_name'] ?? 'İsimsiz Tarla',
+                                          style: GoogleFonts.literata(fontWeight: FontWeight.bold, fontSize: 15, color: const Color(0xFF2E3230)),
                                         ),
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFEAE6DE),
-                                            borderRadius: BorderRadius.circular(4),
-                                          ),
-                                          child: Text(
-                                            (field['soil_type'] ?? 'Tınlı').toString().toUpperCase(),
-                                            style: GoogleFonts.nunitoSans(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF6B6358)),
-                                          ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${field['city'] ?? field['province'] ?? 'Konya'}, ${field['district']} • ${sizeDekar.toStringAsFixed(1)} Dekar',
+                                          style: GoogleFonts.nunitoSans(fontSize: 12, color: const Color(0xFF6B6358)),
                                         ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFE8F6EC),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                cropName.toUpperCase(),
+                                                style: GoogleFonts.nunitoSans(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF2A6038)),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFEAE6DE),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                (field['soil_type'] ?? 'Tınlı').toString().toUpperCase(),
+                                                style: GoogleFonts.nunitoSans(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF6B6358)),
+                                              ),
+                                            ),
+                                          ],
+                                        )
                                       ],
-                                    )
-                                  ],
-                                ),
+                                    ),
+                                  ),
+                                  const Icon(Icons.more_vert, color: Colors.grey),
+                                ],
                               ),
-                              const Icon(Icons.chevron_right, color: Colors.grey),
-                            ],
+                            ),
                           ),
                         );
                       },
                     ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-          // 3. Language Card
-          Card(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            elevation: 0.5,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.language, color: Color(0xFF705C30)),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Dil Seçeneği (Language)',
-                        style: GoogleFonts.literata(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    value: _selectedLanguage,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'tr', child: Text('Türkçe')),
-                      DropdownMenuItem(value: 'en', child: Text('English')),
-                      DropdownMenuItem(value: 'de', child: Text('Deutsch')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() {
-                          _selectedLanguage = val;
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Dil tercihi güncellendi: ${val.toUpperCase()}')),
-                        );
-                      }
-                    },
-                  )
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // 4. Account Settings Card (Stitch mock options)
+          // 3. Account Settings Card
           Card(
             color: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -650,166 +1152,31 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                   ),
                   const SizedBox(height: 12),
                   
-                  // Security
+                  // Security & Password
                   ListTile(
-                    leading: const Icon(Icons.shield_outlined),
+                    leading: const Icon(Icons.shield_outlined, color: Color(0xFF4A7C59)),
                     title: const Text('Güvenlik ve Şifre'),
+                    subtitle: const Text('Şifrenizi ve oturum bilgilerinizi güncelleyin'),
                     trailing: const Icon(Icons.chevron_right, size: 18),
-                    onTap: () {
-                      _showDialogInfo('Güvenlik ve Şifre', 'Şifrenizi ve iki adımlı doğrulama ayarlarınızı buradan yapılandırabilirsiniz. (Şu an SQLite korumalıdır)');
-                    },
+                    onTap: _showChangePasswordDialog,
                   ),
                   const Divider(height: 1),
                   
                   // Notifications
                   ListTile(
-                    leading: const Icon(Icons.notifications_none),
-                    title: const Text('Anlık Bildirimler'),
+                    leading: const Icon(Icons.notifications_active_outlined, color: Color(0xFF4A7C59)),
+                    title: const Text('Anlık Bildirim Tercihleri'),
+                    subtitle: const Text('Hastalık, sulama ve hava durumu uyarıları'),
                     trailing: const Icon(Icons.chevron_right, size: 18),
-                    onTap: () {
-                      _showDialogInfo('Anlık Bildirimler', 'Hastalık uyarıları, hava durumu değişimleri ve sulama önerisi bildirimlerini buradan yönetebilirsiniz.');
-                    },
-                  ),
-                  const Divider(height: 1),
-                  
-                  // Subscription
-                  ListTile(
-                    leading: const Icon(Icons.payments_outlined),
-                    title: const Text('Abonelik Planı'),
-                    trailing: const Icon(Icons.chevron_right, size: 18),
-                    onTap: () {
-                      _showDialogInfo('Abonelik Planı', 'Mevcut Planınız: Tarla Gözcüsü Proaktif Tarım Planı (Ücretsiz Lisans). Aylık hava durumu ve CNN teşhis limiti sınırsızdır.');
-                    },
-                  ),
-                  const Divider(height: 1),
-
-                  // Developer API Server config in-list
-                  ExpansionTile(
-                    leading: const Icon(Icons.dns_outlined, color: Colors.blueGrey),
-                    title: const Text('FastAPI Sunucu Bağlantısı'),
-                    subtitle: Text(
-                      'Şu anki: ${_urlController.text}',
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
-                    ),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                        child: Column(
-                          children: [
-                            TextField(
-                              controller: _urlController,
-                              decoration: const InputDecoration(
-                                labelText: 'Backend API URL',
-                                border: OutlineInputBorder(),
-                                hintText: 'http://10.0.2.2:8000',
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4A7C59), foregroundColor: Colors.white),
-                              onPressed: _saveUrlSetting,
-                              child: const Text('API Adresini Kaydet'),
-                            ),
-                          ],
-                        ),
-                      )
-                    ],
+                    onTap: _showNotificationSettingsDialog,
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 16),
-
-          // 5. Atmospheric Ecological Card
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF4A7C59),
-              borderRadius: BorderRadius.circular(16),
-              image: DecorationImage(
-                image: const NetworkImage('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=600'),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(const Color(0xFF4A7C59).withOpacity(0.85), BlendMode.srcOver),
-              )
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Icon(Icons.eco, color: Color(0xFFC8E8D0), size: 36),
-                const SizedBox(height: 8),
-                Text(
-                  'Geleceğe Kök Salıyoruz',
-                  style: GoogleFonts.literata(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Bu sezon kayıtlı tarlalarınızda toplam ${totalDekars.toStringAsFixed(1)} dekar alanı korudunuz. Yapay zeka destekli analizlerimiz su tüketimini ortalama %12 oranında azaltmaya yardımcı oldu.',
-                  style: GoogleFonts.nunitoSans(fontSize: 13, color: const Color(0xFFE8F6EC), height: 1.4),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFF4A7C59),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                  ),
-                  onPressed: () {
-                    _showDialogInfo(
-                      'Sürdürülebilirlik Etki Raporu',
-                      '• Korunan Toprak Alanı: ${totalDekars.toStringAsFixed(1)} Dekar\n'
-                      '• Tahmini Su Tasarrufu: ${(totalDekars * 140).toStringAsFixed(0)} Litre\n'
-                      '• Karbon Azaltım Etkisi: %4.2\n'
-                      '• Önlenen Potansiyel Hastalık: 3 Vak\'a\n\n'
-                      'Tarla Gözcüsü proaktif tarım modellerini kullandığınız için teşekkür ederiz!'
-                    );
-                  },
-                  child: Text('Etki Raporunu Görüntüle', style: GoogleFonts.nunitoSans(fontWeight: FontWeight.bold)),
-                )
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Logout Button
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB83230),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-            icon: const Icon(Icons.logout),
-            label: Text('Oturumu Kapat', style: GoogleFonts.nunitoSans(fontWeight: FontWeight.bold)),
-          ),
           const SizedBox(height: 24),
         ],
       ),
-    );
-  }
-
-  void _showDialogInfo(String title, String content) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text(title, style: GoogleFonts.literata(fontWeight: FontWeight.bold, color: const Color(0xFF4A7C59))),
-          content: Text(content, style: GoogleFonts.nunitoSans(height: 1.4)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Kapat', style: TextStyle(color: Color(0xFF4A7C59), fontWeight: FontWeight.bold)),
-            )
-          ],
-        );
-      },
     );
   }
 }

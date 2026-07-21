@@ -18,11 +18,18 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(
+    final db = await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
     );
+
+    // Auto migrate columns if missing on existing databases
+    try {
+      await db.execute('ALTER TABLE users ADD COLUMN image_path TEXT;');
+    } catch (_) {}
+
+    return db;
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -41,6 +48,7 @@ class DatabaseHelper {
         role $textType,
         city $textType,
         district $textType,
+        image_path $textType,
         created_at $textType,
         updated_at $textType
       )
@@ -233,21 +241,6 @@ class DatabaseHelper {
         'irrigation_notes': 'Çiçeklenme döneminde aşırı sulama çiçek dökümüne neden olabilir.',
         'fertilization_notes': 'Magnezyum ve Kalsiyum eksikliği çiçek burnu çürüklüğüne yol açar.',
         'common_diseases': 'Bakteriyel Leke, Külleme, Phytophthora Kök Çürüklüğü'
-      },
-      {
-        'name': 'Mısır',
-        'scientific_name': 'Zea mays',
-        'root_depth_m': 0.8,
-        'suggested_npk': '20-10-10',
-        'npk_description': 'Vegetatif gelişim süresince yüksek azot tüketir.',
-        'water_need': 'Yüksek',
-        'growth_duration': 100,
-        'optimum_temp_range': '18-32 C',
-        'optimum_moisture_range_pct': '55-75 %',
-        'suggested_ph_range': '5.8-7.0',
-        'irrigation_notes': 'Püskül çıkarma ve dane dolum dönemlerinde kesinlikle susuz bırakılmamalıdır.',
-        'fertilization_notes': 'Azotun yarısı ekimde, diğer yarısı bitki diz boyuna ulaştığında verilmelidir.',
-        'common_diseases': 'Yaprak Yanıklığı, Mısır Rastığı, Kırmızı Örümcek Zararlısı'
       }
     ];
 
@@ -296,11 +289,20 @@ class DatabaseHelper {
 
   Future<int> updateUser(Map<String, dynamic> user) async {
     final db = await instance.database;
-    final Map<String, dynamic> updatedData = Map<String, dynamic>.from(user);
-    updatedData['updated_at'] = DateTime.now().toIso8601String();
+    final Map<String, dynamic> cleanUser = {};
+    if (user.containsKey('name')) cleanUser['name'] = user['name'];
+    if (user.containsKey('email')) cleanUser['email'] = user['email'];
+    if (user.containsKey('password')) cleanUser['password'] = user['password'];
+    if (user.containsKey('phone')) cleanUser['phone'] = user['phone'];
+    if (user.containsKey('role')) cleanUser['role'] = user['role'];
+    if (user.containsKey('city')) cleanUser['city'] = user['city'];
+    if (user.containsKey('district')) cleanUser['district'] = user['district'];
+    if (user.containsKey('image_path')) cleanUser['image_path'] = user['image_path'];
+    cleanUser['updated_at'] = DateTime.now().toIso8601String();
+
     return await db.update(
       'users',
-      updatedData,
+      cleanUser,
       where: 'id = ?',
       whereArgs: [user['id']],
     );
@@ -309,12 +311,76 @@ class DatabaseHelper {
   // --- CRUD Operations for Fields ---
   Future<int> insertField(Map<String, dynamic> field) async {
     final db = await instance.database;
-    return await db.insert('fields', field);
+    final Map<String, dynamic> cleanField = {
+      'name': field['name'] ?? field['field_name'] ?? 'İsimsiz Tarla',
+      'user_id': field['user_id'] ?? 1,
+      'city': field['city'] ?? field['province'] ?? 'Konya',
+      'district': field['district'] ?? 'Karatay',
+      'latitude': (field['latitude'] as num?)?.toDouble() ?? 37.87,
+      'longitude': (field['longitude'] as num?)?.toDouble() ?? 32.49,
+      'area': (field['area'] as num?)?.toDouble() ?? 10.0,
+      'soil_type': field['soil_type'] ?? 'Tınlı',
+      'irrigation_type': field['irrigation_type'] ?? 'Damlama',
+    };
+    return await db.insert('fields', cleanField);
   }
 
   Future<List<Map<String, dynamic>>> getFieldsForUser(int userId) async {
     final db = await instance.database;
     return await db.query('fields', where: 'user_id = ?', whereArgs: [userId]);
+  }
+
+  Future<int> updateField(Map<String, dynamic> field) async {
+    final db = await instance.database;
+    final Map<String, dynamic> cleanField = {
+      'name': field['name'] ?? field['field_name'] ?? 'İsimsiz Tarla',
+      'city': field['city'] ?? field['province'] ?? 'Konya',
+      'district': field['district'] ?? 'Karatay',
+      'area': (field['area'] as num?)?.toDouble() ?? 10.0,
+      'soil_type': field['soil_type'] ?? 'Tınlı',
+      'irrigation_type': field['irrigation_type'] ?? 'Damlama',
+    };
+    return await db.update(
+      'fields',
+      cleanField,
+      where: 'id = ?',
+      whereArgs: [field['id']],
+    );
+  }
+
+  Future<int> updateFieldCropRelation(int fieldId, int cropId) async {
+    final db = await instance.database;
+    await db.delete('field_crops', where: 'field_id = ?', whereArgs: [fieldId]);
+    return await db.insert('field_crops', {
+      'field_id': fieldId,
+      'crop_id': cropId,
+      'planting_date': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+      'growth_stage': 'Vejetatif',
+      'is_active': 1,
+    });
+  }
+
+  Future<int> deleteField(int fieldId) async {
+    final db = await instance.database;
+    await db.delete('field_crops', where: 'field_id = ?', whereArgs: [fieldId]);
+    await db.delete('sensor_records', where: 'field_id = ?', whereArgs: [fieldId]);
+    await db.delete('weather_records', where: 'field_id = ?', whereArgs: [fieldId]);
+    await db.delete('disease_detection_records', where: 'field_id = ?', whereArgs: [fieldId]);
+    await db.delete('ai_recommendations', where: 'field_id = ?', whereArgs: [fieldId]);
+    return await db.delete('fields', where: 'id = ?', whereArgs: [fieldId]);
+  }
+
+  Future<int> updateUserPassword(int userId, String newPassword) async {
+    final db = await instance.database;
+    return await db.update(
+      'users',
+      {
+        'password': newPassword,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
   }
 
   Future<List<Map<String, dynamic>>> getCrops() async {

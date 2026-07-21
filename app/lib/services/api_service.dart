@@ -16,7 +16,6 @@ class ApiService {
     }
   }
 
-  // 1. CNN leaf disease diagnostics
   Future<Map<String, dynamic>?> predictLeafDisease(File imageFile, {double threshold = 0.25}) async {
     final uri = Uri.parse('$baseUrl/predict?threshold=$threshold');
     var request = http.MultipartRequest('POST', uri);
@@ -24,7 +23,6 @@ class ApiService {
     var multipartFile = await http.MultipartFile.fromPath(
       'file',
       imageFile.path,
-      filename: 'leaf_image.jpg',
     );
     request.files.add(multipartFile);
 
@@ -33,9 +31,11 @@ class ApiService {
       var response = await http.Response.fromStream(streamedResponse);
       
       if (response.statusCode == 200) {
-        return jsonDecode(utf8.decode(response.bodyBytes));
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        print("Backend predict success: $decoded");
+        return decoded;
       } else {
-        print('Inference failed with status: ${response.statusCode}');
+        print('Inference failed with status: ${response.statusCode}, body: ${response.body}');
         return null;
       }
     } catch (e) {

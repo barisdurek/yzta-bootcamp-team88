@@ -24,3 +24,8 @@ Thumbs.db
 *.iml
 *.ipr
 *.iws
+
+# Environment Variables (Secrets)
+.env
+*.env
+backend/.env
