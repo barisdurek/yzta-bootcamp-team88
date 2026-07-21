@@ -8,6 +8,7 @@ import 'diagnosis_screen.dart';
 import 'risk_map_screen.dart';
 import 'terra_chat_screen.dart';
 import 'profile_settings_screen.dart';
+import '../utils/turkey_cities.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -39,15 +40,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadFields();
   }
 
-  Future<void> _loadFields() async {
+  Future<void> _loadFields([int? selectFieldId]) async {
     setState(() => _isLoading = true);
-    final fields = await DatabaseHelper.instance.getFieldsForUser(widget.user['id']);
+    final userId = (widget.user['id'] ?? widget.user['user_id'] ?? 1) as int;
+    final fields = await DatabaseHelper.instance.getFieldsForUser(userId);
+
+    Map<String, dynamic>? nextSelected;
+    if (fields.isNotEmpty) {
+      if (selectFieldId != null) {
+        nextSelected = fields.firstWhere(
+          (f) => f['id'] == selectFieldId,
+          orElse: () => fields.last,
+        );
+      } else if (_selectedField != null) {
+        final existingId = _selectedField!['id'];
+        nextSelected = fields.firstWhere(
+          (f) => f['id'] == existingId,
+          orElse: () => fields.first,
+        );
+      } else {
+        nextSelected = fields.first;
+      }
+    }
+
     setState(() {
       _fields = fields;
-      if (fields.isNotEmpty) {
-        _selectedField = fields.first;
-      } else {
-        _selectedField = null;
+      _selectedField = nextSelected;
+      if (nextSelected == null) {
         _activeCrop = null;
       }
       _isLoading = false;
@@ -168,14 +187,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _showAddFieldDialog() async {
     final nameController = TextEditingController();
     final areaController = TextEditingController();
-    final latController = TextEditingController(text: "38.4622");
-    final lonController = TextEditingController(text: "27.0923");
     
-    String selectedSoilType = 'Kumlu';
-    String selectedIrrigation = 'Damlama';
-    int? selectedCropId;
-
-    final crops = await DatabaseHelper.instance.getCrops();
+    String selectedSoilType = 'Tınlı';
+    int selectedCropId = 1;
+    String? selectedCity = widget.user['city'] != null && widget.user['city'].toString().isNotEmpty
+        ? widget.user['city']
+        : 'Konya';
+    String? selectedDistrict = widget.user['district'] != null && widget.user['district'].toString().isNotEmpty
+        ? widget.user['district']
+        : 'Karatay';
 
     if (mounted) {
       showDialog(
@@ -183,8 +203,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         builder: (context) {
           return StatefulBuilder(
             builder: (context, setDialogState) {
+              final districts = selectedCity != null ? TurkeyCities.getDistrictsForCity(selectedCity!) : <String>[];
+              if (selectedDistrict != null && !districts.contains(selectedDistrict)) {
+                selectedDistrict = districts.isNotEmpty ? districts.first : null;
+              }
+
               return AlertDialog(
-                backgroundColor: const Color(0xFFFAF6F0),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 title: Text(
                   'Yeni Tarla Ekle',
@@ -196,104 +220,142 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       TextField(
                         controller: nameController,
-                        decoration: const InputDecoration(labelText: 'Tarla Adı (Örn: Batı Tarlası)'),
+                        decoration: const InputDecoration(labelText: 'Tarla Adı (örn: Zeytinlik Altı)', border: OutlineInputBorder()),
                       ),
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<int>(
-                        value: selectedCropId,
-                        decoration: const InputDecoration(labelText: 'Ekiş Yapılan Mahsul'),
-                        items: crops.map((c) {
-                          return DropdownMenuItem<int>(
-                            value: c['id'],
-                            child: Text(c['name']),
-                          );
+                      TextField(
+                        controller: areaController,
+                        decoration: const InputDecoration(labelText: 'Alan (Dekar)', border: OutlineInputBorder()),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 12),
+                      
+                      // City Dropdown
+                      DropdownButtonFormField<String>(
+                        value: selectedCity,
+                        decoration: const InputDecoration(labelText: 'İl (Şehir)', border: OutlineInputBorder()),
+                        items: TurkeyCities.getCities.map((city) {
+                          return DropdownMenuItem(value: city, child: Text(city));
                         }).toList(),
-                        onChanged: (val) => setDialogState(() => selectedCropId = val),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setDialogState(() {
+                              selectedCity = val;
+                              selectedDistrict = TurkeyCities.getDistrictsForCity(val).first;
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      // District Dropdown
+                      DropdownButtonFormField<String>(
+                        value: selectedDistrict,
+                        decoration: const InputDecoration(labelText: 'İlçe', border: OutlineInputBorder()),
+                        items: districts.map((dist) {
+                          return DropdownMenuItem(value: dist, child: Text(dist));
+                        }).toList(),
+                        onChanged: selectedCity == null
+                            ? null
+                            : (val) {
+                                setDialogState(() {
+                                  selectedDistrict = val;
+                                });
+                              },
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         value: selectedSoilType,
-                        decoration: const InputDecoration(labelText: 'Toprak Tipi'),
-                        items: ['Kumlu', 'Tınlı', 'Killi'].map((s) {
-                          return DropdownMenuItem<String>(value: s, child: Text(s));
-                        }).toList(),
-                        onChanged: (val) => setDialogState(() => selectedSoilType = val!),
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: selectedIrrigation,
-                        decoration: const InputDecoration(labelText: 'Sulama Tipi'),
-                        items: ['Damlama', 'Yağmurlama', 'Karık'].map((s) {
-                          return DropdownMenuItem<String>(value: s, child: Text(s));
-                        }).toList(),
-                        onChanged: (val) => setDialogState(() => selectedIrrigation = val!),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: areaController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(labelText: 'Alan (Dekar)'),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              controller: latController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(labelText: 'Enlem'),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              controller: lonController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(labelText: 'Boylam'),
-                            ),
-                          ),
+                        decoration: const InputDecoration(labelText: 'Toprak Tipi', border: OutlineInputBorder()),
+                        items: const [
+                          DropdownMenuItem(value: 'Killi', child: Text('Killi')),
+                          DropdownMenuItem(value: 'Tınlı', child: Text('Tınlı')),
+                          DropdownMenuItem(value: 'Kumlu', child: Text('Kumlu')),
+                          DropdownMenuItem(value: 'Kireçli', child: Text('Kireçli')),
                         ],
-                      )
+                        onChanged: (val) {
+                          if (val != null) {
+                            setDialogState(() {
+                              selectedSoilType = val;
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<int>(
+                        value: selectedCropId,
+                        decoration: const InputDecoration(labelText: 'Ekili Ürün', border: OutlineInputBorder()),
+                        items: const [
+                          DropdownMenuItem(value: 1, child: Text('Domates')),
+                          DropdownMenuItem(value: 2, child: Text('Patates')),
+                          DropdownMenuItem(value: 3, child: Text('Biber')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) {
+                            setDialogState(() {
+                              selectedCropId = val;
+                            });
+                          }
+                        },
+                      ),
                     ],
                   ),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('İptal', style: GoogleFonts.nunitoSans(color: Colors.grey)),
+                    child: const Text('İptal', style: TextStyle(color: Colors.grey)),
                   ),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4A7C59)),
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4A7C59), foregroundColor: Colors.white),
                     onPressed: () async {
-                      if (nameController.text.isEmpty || selectedCropId == null) return;
-                      
-                      final fieldId = await DatabaseHelper.instance.insertField({
-                        'name': nameController.text.trim(),
-                        'user_id': widget.user['id'],
-                        'city': 'Konya',
-                        'district': 'Karatay',
-                        'latitude': double.tryParse(latController.text) ?? 38.4622,
-                        'longitude': double.tryParse(lonController.text) ?? 27.0923,
-                        'area': double.tryParse(areaController.text) ?? 10.0,
-                        'soil_type': selectedSoilType,
-                        'irrigation_type': selectedIrrigation,
-                      });
+                      final name = nameController.text.trim();
+                      final area = double.tryParse(areaController.text.trim()) ?? 10.0;
 
-                      await DatabaseHelper.instance.insertFieldCrop({
-                        'field_id': fieldId,
-                        'crop_id': selectedCropId,
-                        'planting_date': DateTime.now().toIso8601String(),
-                        'expected_harvest_date': DateTime.now().add(const Duration(days: 90)).toIso8601String(),
-                        'growth_stage': 'Fide Dönemi',
-                        'is_active': 1,
-                      });
+                      if (name.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Lütfen tarla adını giriniz.'), backgroundColor: Color(0xFFB83230)),
+                        );
+                        return;
+                      }
 
-                      Navigator.pop(context);
-                      await _loadFields();
+                      try {
+                        final db = DatabaseHelper.instance;
+                        final userId = (widget.user['id'] ?? widget.user['user_id'] ?? 1) as int;
+
+                        final fid = await db.insertField({
+                          'name': name,
+                          'user_id': userId,
+                          'city': selectedCity ?? 'Konya',
+                          'district': selectedDistrict ?? 'Karatay',
+                          'area': area,
+                          'soil_type': selectedSoilType,
+                          'irrigation_type': 'Damlama',
+                          'latitude': 37.87,
+                          'longitude': 32.49,
+                        });
+
+                        await db.insertFieldCrop({
+                          'field_id': fid,
+                          'crop_id': selectedCropId,
+                          'planting_date': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+                          'growth_stage': 'Vejetatif',
+                          'is_active': 1,
+                        });
+
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Yeni tarla başarıyla eklendi: $name'), backgroundColor: const Color(0xFF4A7C59)),
+                        );
+                        await _loadFields(fid);
+                      } catch (e) {
+                        print("Add field error: $e");
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Tarla eklenirken bir hata oluştu: $e'), backgroundColor: const Color(0xFFB83230)),
+                        );
+                      }
                     },
-                    child: Text('Kaydet', style: GoogleFonts.nunitoSans(color: Colors.white)),
+                    child: const Text('Kaydet'),
                   ),
                 ],
               );
@@ -426,14 +488,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Expanded(
                 child: DropdownButtonHideUnderline(
-                  child: DropdownButton<Map<String, dynamic>>(
-                    value: _selectedField,
+                  child: DropdownButton<int>(
+                    value: _selectedField != null ? _selectedField!['id'] as int? : null,
                     icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF4A7C59)),
                     items: _fields.map((f) {
-                      return DropdownMenuItem<Map<String, dynamic>>(
-                        value: f,
+                      return DropdownMenuItem<int>(
+                        value: f['id'] as int,
                         child: Text(
-                          f['name'],
+                          f['name'] ?? f['field_name'] ?? 'Tarla',
                           style: GoogleFonts.literata(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -443,10 +505,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       );
                     }).toList(),
                     onChanged: (val) {
-                      setState(() {
-                        _selectedField = val;
-                      });
-                      _loadFieldDetails();
+                      if (val != null) {
+                        final selected = _fields.firstWhere((f) => f['id'] == val, orElse: () => _fields.first);
+                        setState(() {
+                          _selectedField = selected;
+                        });
+                        _loadFieldDetails();
+                      }
                     },
                   ),
                 ),
