@@ -131,8 +131,15 @@ class ApiService {
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
-        return data['recommendation'];
+        final rec = data['recommendation'];
+        if (rec is String) {
+          return rec;
+        } else if (rec is Map && rec['recommendation_text'] != null) {
+          return rec['recommendation_text'].toString();
+        }
+        return data['message']?.toString() ?? 'AI Önerisi alındı.';
       }
+      print('AI Agent http error: ${response.statusCode} - ${response.body}');
       return null;
     } catch (e) {
       print('AI Agent recommendation connection error: $e');

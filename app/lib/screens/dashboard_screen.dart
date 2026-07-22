@@ -833,7 +833,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : screens[_currentIndex],
+                : IndexedStack(
+                    index: _currentIndex,
+                    children: screens,
+                  ),
           ],
         ),
       ),

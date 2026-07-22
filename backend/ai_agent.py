@@ -15,31 +15,131 @@ def load_system_prompt() -> str:
             return f.read()
     return """Sen, Tarla Gözcüsü proaktif tarımsal karar destek sisteminin Merkezi AI Ajanı ve çiftçinin en güvenilir, bilgili ve pratik Ziraat Mühendisi asistanısın."""
 
+def clean_agent_output(text: str) -> str:
+    """
+    Strips internal thinking, metadata echo, backticks, English outline headers, or Gemma reasoning trees.
+    Returns only the clean, final Turkish response for the farmer.
+    """
+    if not text:
+        return ""
+
+    lines = text.split("\n")
+    cleaned_lines = []
+    
+    # English outline/reasoning keywords to skip
+    skip_keywords = [
+        "structure:", "greeting:", "cnn check:", "analysis:", "explanation:",
+        "persona:", "tone:", "language level:", "input data analysis:", 
+        "farmer's question:", "symptom:", "common causes:", "directly address",
+        "no internal thoughts", "use the provided system prompt", "greeting.", "action plan."
+    ]
+
+    for line in lines:
+        stripped = line.strip()
+        lower_line = stripped.lower()
+
+        # Skip backticks or raw metadata keys
+        if stripped.startswith("`") or stripped.startswith("* `") or stripped.startswith("- `"):
+            continue
+
+        # Skip numbered outline items like "1. Greeting.", "2. Status Assessment", etc.
+        if any(lower_line.startswith(p) for p in ["1. greeting", "2. status assessment", "3. possible causes", "4. action plan"]):
+            continue
+
+        # Skip bullet points starting with English reasoning labels
+        if any(marker in lower_line for marker in skip_keywords):
+            continue
+
+        cleaned_lines.append(line)
+
+    result = "\n".join(cleaned_lines).strip()
+    
+    # Strip stray trailing quotes after greeting.
+    result = result.replace('".', '.').replace('"', '')
+
+    # Ensure result starts cleanly with greeting or icon
+    lower_res = result.lower()
+    turkish_triggers = ["merhaba", "selam", "🌾", "🍃", "🔴", "⚠️", "değerli çiftçimiz", "tarla gözcüsü"]
+    first_idx = -1
+    for trigger in turkish_triggers:
+        idx = lower_res.find(trigger)
+        if idx != -1:
+            if first_idx == -1 or idx < first_idx:
+                first_idx = idx
+
+    if first_idx > 0:
+        result = result[first_idx:].strip()
+
+    return result if len(result) > 10 else text
+
 def generate_proactive_recommendation(tarla_data: Dict[str, Any]) -> str:
     """
-    Orchestrates the AI Agent report generation.
-    If GEMINI_API_KEY is available, calls Gemini. Otherwise, generates a rule-based mock report.
+    Orchestrates the AI Agent report generation using standard Gemini models.
     """
     api_key = os.getenv("GEMINI_API_KEY")
     
     if api_key and api_key != "YOUR_GEMINI_KEY" and len(api_key.strip()) > 10:
         try:
-            genai.configure(api_key=api_key)
+            genai.configure(api_key=api_key.strip())
             system_instruction = load_system_prompt()
             
-            # Use gemini-1.5-flash or gemini-2.5-flash
-            model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash",
-                system_instruction=system_instruction,
-                generation_config={"response_mime_type": "text/plain", "temperature": 0.2}
-            )
+            # Prioritize standard gemini-2.5-flash and gemini-1.5-flash models
+            candidate_models = [
+                "gemini-2.5-flash",
+                "models/gemini-2.5-flash",
+                "gemini-2.0-flash",
+                "models/gemini-2.0-flash",
+                "gemini-1.5-flash",
+                "models/gemini-1.5-flash",
+                "gemini-1.5-pro",
+            ]
             
-            response = model.generate_content(json.dumps(tarla_data, ensure_ascii=False))
-            return response.text
-        except Exception as e:
-            print(f"Gemini API call failed, falling back to rule-based generation: {e}")
+            try:
+                for m in genai.list_models():
+                    if "generateContent" in m.supported_generation_methods:
+                        name_lower = m.name.lower()
+                        # Strictly EXCLUDE audio, tts, gemma, or zero-quota lite models
+                        if not any(excluded in name_lower for excluded in ["tts", "embed", "audio", "imagen", "bison", "gemma", "lite"]):
+                            if m.name not in candidate_models:
+                                candidate_models.append(m.name)
+            except Exception as list_err:
+                print(f"Could not list models: {list_err}")
             
-    # Algorithmic Mock Fallback implementing all 6 Prompt Rules:
+            # Extract user query if present in history
+            user_query = ""
+            history = tarla_data.get("farmer_history", [])
+            if history and isinstance(history, list) and len(history) > 0:
+                last_item = history[-1]
+                if isinstance(last_item, dict):
+                    user_query = str(last_item.get("details", ""))
+
+            prompt = f"""
+            YALNIZCA TÜRKÇE YANIT VER.
+            Çiftçimizi selamla ("Merhaba [İsim]"), sorusunu yanıtla, tarlanın canlı nem/sıcaklık verisiyle ilişkilendir ve pratik tavsiyeler ver.
+            İngilizce not, 'Structure:', 'Analysis:', 'Greeting:' veya taslak ekleme!
+
+            ÇİFTÇİ SORUSU: "{user_query}"
+            TARLA CANLI VERİLERİ: {json.dumps(tarla_data, ensure_ascii=False)}
+            """
+
+            for model_name in candidate_models:
+                try:
+                    model = genai.GenerativeModel(
+                        model_name=model_name,
+                        system_instruction=system_instruction,
+                        generation_config={"temperature": 0.2}
+                    )
+                    response = model.generate_content(prompt)
+                    if response and response.text and len(response.text.strip()) > 10:
+                        cleaned = clean_agent_output(response.text)
+                        print(f"Gemini API SUCCESS using model: {model_name}")
+                        return cleaned
+                except Exception as e:
+                    print(f"Gemini model '{model_name}' skipped: {e}")
+        except Exception as top_err:
+            print(f"Gemini initialization error: {top_err}")
+
+    print("Gemini API call bypassed or failed on all models, using expert fallback rule engine.")
     return generate_mock_expert_advice(tarla_data)
 
 def generate_mock_expert_advice(data: Dict[str, Any]) -> str:
@@ -53,7 +153,13 @@ def generate_mock_expert_advice(data: Dict[str, Any]) -> str:
     sensors = data.get("sensor_records", {})
     forecast = data.get("weather_forecast", [])
     cnn_result = data.get("cnn_disease_result", {})
-    
+
+    user_query = ""
+    if history and isinstance(history, list) and len(history) > 0:
+        last_item = history[-1]
+        if isinstance(last_item, dict):
+            user_query = str(last_item.get("details", "")).lower()
+
     farmer_name = user_info.get("name", "Çiftçimiz")
     location = user_info.get("location", "Ege Bölgesi")
     field_name = field_info.get("field_name", "Tarlanız")
@@ -85,6 +191,12 @@ def generate_mock_expert_advice(data: Dict[str, Any]) -> str:
         if has_heavy_rain:
             report.append(f"⚠️ **KRİTİK HAVA UYARISI: Şiddetli Yağış Geliyor!**\n")
             report.append(f"**Sulama yapma ve gübre yıkanmasına (NPK kaybına) karşı dikkatli ol.** Önümüzdeki günlerde bölgede yoğun yağışlar tahmin edilmektedir.\n")
+        elif "yeşil" in user_query or "sarı" in user_query or "renk" in user_query or "yaprak" in user_query:
+            report.append(f"🍃 **Ziraat Mühendisi Teşhisi (Yaprak Renk Değişimi & Kloroz):**\n")
+            report.append(f"Merhaba {farmer_name}, {field_name} tarlanızdaki {crop_name} yapraklarında gözlemlediğiniz açık yeşil/sarı renk değişimi (kloroz) 2 ana sebepten kaynaklanır:\n")
+            report.append(f"1. **Azot (N) Noksanlığı:** Bitki gelişim döneminde yeterli azotu alamadığında klorofil sentezi yavaşlar ve yapraklar açık yeşile/sarıya döner.")
+            report.append(f"2. **Aşırı Sulama / Kök Oksijensizliği:** Toprak neminin yüksek kalması kök solunumunu ve besin emilimini engeller.\n")
+            report.append(f"💡 **Tavsiye:** Damlama sulama ile azot takviyesi yapın ve toprak havalanmasını sağlayın.\n")
         else:
             report.append(f"🌾 **Tarla Gözcüsü Proaktif Durum Raporu**\n")
             report.append(f"Merhaba {farmer_name}, {field_name} tarlanızdaki güncel koşulları analiz ettim. Genel durum stabil görünüyor.\n")

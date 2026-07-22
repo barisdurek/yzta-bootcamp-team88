@@ -180,16 +180,26 @@ def do_leaching_calc(req: LeachingRequest):
     summary="AI önerisi üretir ve veritabanına kaydeder"
 )
 def get_ai_recommendation(
-    request: AIRecommendationRequest,
+    payload: Dict[str, Any],
     db: Session = Depends(get_db),
 ):
     try:
-        combined_source_data = dict(request.source_data)
-        
+        # Support both wrapped AIRecommendationRequest format and raw tarlaData JSON
+        if "source_data" in payload and isinstance(payload["source_data"], dict):
+            combined_source_data = dict(payload["source_data"])
+            field_id_str = str(payload.get("field_id", "demo_field"))
+            recommendation_type = str(payload.get("recommendation_type", "general"))
+            risk_level = payload.get("risk_level", "Düşük")
+        else:
+            combined_source_data = dict(payload)
+            field_id_str = str(payload.get("field_info", {}).get("field_name", "demo_field"))
+            recommendation_type = "general"
+            risk_level = "Düşük"
+
         # Try finding field in DB if DB and valid UUID are available
         if db is not None:
             try:
-                field_uuid = uuid.UUID(request.field_id)
+                field_uuid = uuid.UUID(field_id_str)
                 field = get_field_by_id(db, field_uuid)
                 if field:
                     combined_source_data["field"] = {
@@ -214,14 +224,14 @@ def get_ai_recommendation(
         created_rec = None
         if db is not None:
             try:
-                field_uuid = uuid.UUID(request.field_id)
+                field_uuid = uuid.UUID(field_id_str)
                 created_rec = create_ai_recommendation(
                     db,
                     {
                         "field_id": field_uuid,
-                        "recommendation_type": request.recommendation_type,
+                        "recommendation_type": recommendation_type,
                         "recommendation_text": recommendation_text,
-                        "risk_level": request.risk_level,
+                        "risk_level": risk_level,
                         "source_data": combined_source_data,
                     },
                 )
@@ -230,18 +240,20 @@ def get_ai_recommendation(
 
         return {
             "message": "AI önerisi üretildi.",
-            "recommendation": {
+            "recommendation": recommendation_text,
+            "data": {
                 "id": str(created_rec.id) if created_rec else str(uuid.uuid4()),
-                "field_id": request.field_id,
-                "recommendation_type": request.recommendation_type,
+                "field_id": field_id_str,
+                "recommendation_type": recommendation_type,
                 "recommendation_text": recommendation_text,
-                "risk_level": request.risk_level or "Düşük",
+                "risk_level": risk_level or "Düşük",
                 "source_data": combined_source_data,
                 "created_at": created_rec.created_at.isoformat() if created_rec else datetime.now().isoformat(),
             },
         }
 
     except Exception as e:
+        print(f"AI Recommendation error: {e}")
         if db:
             try:
                 db.rollback()

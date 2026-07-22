@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../database/database_helper.dart';
 import '../utils/turkey_cities.dart';
+import 'login_screen.dart';
 
 class ProfileSettingsScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -1174,7 +1175,54 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          Card(
+            color: const Color(0xFFFFDAD8),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            elevation: 0.5,
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              leading: const Icon(Icons.logout, color: Color(0xFFB83230)),
+              title: Text(
+                'Çıkış Yap',
+                style: GoogleFonts.nunitoSans(fontWeight: FontWeight.bold, color: const Color(0xFFB83230), fontSize: 16),
+              ),
+              subtitle: Text(
+                'Hesabınızdan güvenli şekilde çıkış yapın',
+                style: GoogleFonts.nunitoSans(fontSize: 12, color: const Color(0xFF690005)),
+              ),
+              trailing: const Icon(Icons.chevron_right, color: Color(0xFFB83230)),
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    title: Text('Çıkış Yap', style: GoogleFonts.literata(fontWeight: FontWeight.bold, color: const Color(0xFFB83230))),
+                    content: Text('Hesabınızdan çıkış yapmak istediğinize emin misiniz?', style: GoogleFonts.nunitoSans()),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('İptal', style: TextStyle(color: Colors.grey)),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB83230), foregroundColor: Colors.white),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (context) => const LoginScreen()),
+                            (route) => false,
+                          );
+                        },
+                        child: const Text('Çıkış Yap'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 32),
         ],
       ),
     );
