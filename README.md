@@ -33,7 +33,8 @@ Tarla Gözcüsü
 - Teknolojik tarım asistanlarına entegre olmaya açık tüm tarım sektörü paydaşları
 ## Work (Epic) LIST URL
 - Jira List URL: https://zahidnabicelik.atlassian.net/jira/software/projects/E88/list?jql=project%20%3D%20E88%20ORDER%20BY%20cf%5B10019%5D%20ASC
-
+## Sprints Timeline URL
+- Jira Timeline URL: https://zahidnabicelik.atlassian.net/jira/software/projects/E88/boards/133/timeline
 ## Product Backlog URL
 - Jira Backlog URL: https://zahidnabicelik.atlassian.net/jira/software/projects/E88/boards/133/backlog?atlOrigin=eyJpIjoiNmRiZmM1MmU4MjY2NGVlM2JiMjQxODFiOTU1MzE5YTciLCJwIjoiaiJ9
 
