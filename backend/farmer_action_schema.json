@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TarlaGözcüsüFarmerActionSchema",
+  "description": "Tarla Gözcüsü Terra AI Karar Destek Ajanı Çiftçi Aksiyon Kartı JSON Şablonu",
+  "type": "object",
+  "properties": {
+    "field_id": {
+      "type": "string",
+      "example": "tarla_88_adana_01"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "example": "2026-07-26T12:00:00Z"
+    },
+    "status_summary": {
+      "type": "object",
+      "properties": {
+        "overall_health": {
+          "type": "string",
+          "enum": ["CRITICAL", "WARNING", "GOOD", "OPTIMAL"]
+        },
+        "has_urgent_action": {
+          "type": "boolean"
+        }
+      },
+      "required": ["overall_health", "has_urgent_action"]
+    },
+    "farmer_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "act_irrigation_stop_01"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["IRRIGATION", "FERTILIZATION", "PEST_CONTROL", "REGIONAL_ALERT"]
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["CRITICAL", "WARNING", "INFO", "SUCCESS"]
+          },
+          "badge_text": {
+            "type": "string",
+            "example": "🛑 SULAMAYI DURDURUN"
+          },
+          "action_title": {
+            "type": "string",
+            "example": "Bugün sulama vanalarını kapatın"
+          },
+          "reason_description": {
+            "type": "string",
+            "example": "Önümüzdeki 24 saat içinde 18 mm şiddetli yağış bekleniyor. Toprağınız zaten yeterince nemli."
+          },
+          "estimated_benefit": {
+            "type": "string",
+            "example": "Tahmini ~150 TL Su/Elektrik Tasarrufu & Kök Çürümesi Önleme"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "severity",
+          "badge_text",
+          "action_title",
+          "reason_description",
+          "estimated_benefit"
+        ]
+      }
+    }
+  },
+  "required": ["field_id", "timestamp", "status_summary", "farmer_actions"]
+}
