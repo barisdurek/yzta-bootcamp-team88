@@ -251,209 +251,301 @@ class DatabaseHelper {
 
   // --- CRUD Operations for Users ---
   Future<Map<String, dynamic>?> registerUser(String name, String email, String password) async {
-    final db = await instance.database;
-    final user = {
-      'name': name,
-      'email': email,
-      'password': password, // In production, hash this.
-      'phone': '',
-      'role': 'Üretici',
-      'city': 'Konya',
-      'district': 'Karatay',
-      'created_at': DateTime.now().toIso8601String(),
-      'updated_at': DateTime.now().toIso8601String(),
-    };
     try {
+      final db = await instance.database;
+      final user = {
+        'name': name,
+        'email': email,
+        'password': password,
+        'phone': '',
+        'role': 'Üretici',
+        'city': 'Konya',
+        'district': 'Karatay',
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      };
       final id = await db.insert('users', user);
       final registered = Map<String, dynamic>.from(user);
       registered['id'] = id;
       return registered;
     } catch (e) {
-      print("User registration failed: $e");
+      print("User registration database error: $e");
       return null;
     }
   }
 
   Future<Map<String, dynamic>?> loginUser(String email, String password) async {
-    final db = await instance.database;
-    final results = await db.query(
-      'users',
-      where: 'email = ? AND password = ?',
-      whereArgs: [email, password],
-    );
-    if (results.isNotEmpty) {
-      return results.first;
+    try {
+      final db = await instance.database;
+      final results = await db.query(
+        'users',
+        where: 'email = ? AND password = ?',
+        whereArgs: [email, password],
+      );
+      if (results.isNotEmpty) {
+        return results.first;
+      }
+    } catch (e) {
+      print("Login database error: $e");
     }
     return null;
   }
 
   Future<int> updateUser(Map<String, dynamic> user) async {
-    final db = await instance.database;
-    final Map<String, dynamic> cleanUser = {};
-    if (user.containsKey('name')) cleanUser['name'] = user['name'];
-    if (user.containsKey('email')) cleanUser['email'] = user['email'];
-    if (user.containsKey('password')) cleanUser['password'] = user['password'];
-    if (user.containsKey('phone')) cleanUser['phone'] = user['phone'];
-    if (user.containsKey('role')) cleanUser['role'] = user['role'];
-    if (user.containsKey('city')) cleanUser['city'] = user['city'];
-    if (user.containsKey('district')) cleanUser['district'] = user['district'];
-    if (user.containsKey('image_path')) cleanUser['image_path'] = user['image_path'];
-    cleanUser['updated_at'] = DateTime.now().toIso8601String();
+    try {
+      final db = await instance.database;
+      final Map<String, dynamic> cleanUser = {};
+      if (user.containsKey('name')) cleanUser['name'] = user['name'];
+      if (user.containsKey('email')) cleanUser['email'] = user['email'];
+      if (user.containsKey('password')) cleanUser['password'] = user['password'];
+      if (user.containsKey('phone')) cleanUser['phone'] = user['phone'];
+      if (user.containsKey('role')) cleanUser['role'] = user['role'];
+      if (user.containsKey('city')) cleanUser['city'] = user['city'];
+      if (user.containsKey('district')) cleanUser['district'] = user['district'];
+      if (user.containsKey('image_path')) cleanUser['image_path'] = user['image_path'];
+      cleanUser['updated_at'] = DateTime.now().toIso8601String();
 
-    return await db.update(
-      'users',
-      cleanUser,
-      where: 'id = ?',
-      whereArgs: [user['id']],
-    );
+      return await db.update(
+        'users',
+        cleanUser,
+        where: 'id = ?',
+        whereArgs: [user['id']],
+      );
+    } catch (e) {
+      print("Update user database error: $e");
+      return 0;
+    }
   }
 
   // --- CRUD Operations for Fields ---
   Future<int> insertField(Map<String, dynamic> field) async {
-    final db = await instance.database;
-    final Map<String, dynamic> cleanField = {
-      'name': field['name'] ?? field['field_name'] ?? 'İsimsiz Tarla',
-      'user_id': field['user_id'] ?? 1,
-      'city': field['city'] ?? field['province'] ?? 'Konya',
-      'district': field['district'] ?? 'Karatay',
-      'latitude': (field['latitude'] as num?)?.toDouble() ?? 37.87,
-      'longitude': (field['longitude'] as num?)?.toDouble() ?? 32.49,
-      'area': (field['area'] as num?)?.toDouble() ?? 10.0,
-      'soil_type': field['soil_type'] ?? 'Tınlı',
-      'irrigation_type': field['irrigation_type'] ?? 'Damlama',
-    };
-    return await db.insert('fields', cleanField);
+    try {
+      final db = await instance.database;
+      final Map<String, dynamic> cleanField = {
+        'name': field['name'] ?? field['field_name'] ?? 'İsimsiz Tarla',
+        'user_id': field['user_id'] ?? 1,
+        'city': field['city'] ?? field['province'] ?? 'Konya',
+        'district': field['district'] ?? 'Karatay',
+        'latitude': (field['latitude'] as num?)?.toDouble() ?? 37.87,
+        'longitude': (field['longitude'] as num?)?.toDouble() ?? 32.49,
+        'area': (field['area'] as num?)?.toDouble() ?? 10.0,
+        'soil_type': field['soil_type'] ?? 'Tınlı',
+        'irrigation_type': field['irrigation_type'] ?? 'Damlama',
+      };
+      return await db.insert('fields', cleanField);
+    } catch (e) {
+      print("Insert field database error: $e");
+      return -1;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getFieldsForUser(int userId) async {
-    final db = await instance.database;
-    return await db.query('fields', where: 'user_id = ?', whereArgs: [userId]);
+    try {
+      final db = await instance.database;
+      return await db.query('fields', where: 'user_id = ?', whereArgs: [userId]);
+    } catch (e) {
+      print("Get fields database error: $e");
+      return [];
+    }
   }
 
   Future<int> updateField(Map<String, dynamic> field) async {
-    final db = await instance.database;
-    final Map<String, dynamic> cleanField = {
-      'name': field['name'] ?? field['field_name'] ?? 'İsimsiz Tarla',
-      'city': field['city'] ?? field['province'] ?? 'Konya',
-      'district': field['district'] ?? 'Karatay',
-      'area': (field['area'] as num?)?.toDouble() ?? 10.0,
-      'soil_type': field['soil_type'] ?? 'Tınlı',
-      'irrigation_type': field['irrigation_type'] ?? 'Damlama',
-    };
-    return await db.update(
-      'fields',
-      cleanField,
-      where: 'id = ?',
-      whereArgs: [field['id']],
-    );
+    try {
+      final db = await instance.database;
+      final Map<String, dynamic> cleanField = {
+        'name': field['name'] ?? field['field_name'] ?? 'İsimsiz Tarla',
+        'city': field['city'] ?? field['province'] ?? 'Konya',
+        'district': field['district'] ?? 'Karatay',
+        'area': (field['area'] as num?)?.toDouble() ?? 10.0,
+        'soil_type': field['soil_type'] ?? 'Tınlı',
+        'irrigation_type': field['irrigation_type'] ?? 'Damlama',
+      };
+      return await db.update(
+        'fields',
+        cleanField,
+        where: 'id = ?',
+        whereArgs: [field['id']],
+      );
+    } catch (e) {
+      print("Update field database error: $e");
+      return 0;
+    }
   }
 
   Future<int> updateFieldCropRelation(int fieldId, int cropId) async {
-    final db = await instance.database;
-    await db.delete('field_crops', where: 'field_id = ?', whereArgs: [fieldId]);
-    return await db.insert('field_crops', {
-      'field_id': fieldId,
-      'crop_id': cropId,
-      'planting_date': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
-      'growth_stage': 'Vejetatif',
-      'is_active': 1,
-    });
+    try {
+      final db = await instance.database;
+      await db.delete('field_crops', where: 'field_id = ?', whereArgs: [fieldId]);
+      return await db.insert('field_crops', {
+        'field_id': fieldId,
+        'crop_id': cropId,
+        'planting_date': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+        'growth_stage': 'Vejetatif',
+        'is_active': 1,
+      });
+    } catch (e) {
+      print("Update field crop relation error: $e");
+      return 0;
+    }
   }
 
   Future<int> deleteField(int fieldId) async {
-    final db = await instance.database;
-    await db.delete('field_crops', where: 'field_id = ?', whereArgs: [fieldId]);
-    await db.delete('sensor_records', where: 'field_id = ?', whereArgs: [fieldId]);
-    await db.delete('weather_records', where: 'field_id = ?', whereArgs: [fieldId]);
-    await db.delete('disease_detection_records', where: 'field_id = ?', whereArgs: [fieldId]);
-    await db.delete('ai_recommendations', where: 'field_id = ?', whereArgs: [fieldId]);
-    return await db.delete('fields', where: 'id = ?', whereArgs: [fieldId]);
+    try {
+      final db = await instance.database;
+      await db.delete('field_crops', where: 'field_id = ?', whereArgs: [fieldId]);
+      await db.delete('sensor_records', where: 'field_id = ?', whereArgs: [fieldId]);
+      await db.delete('weather_records', where: 'field_id = ?', whereArgs: [fieldId]);
+      await db.delete('disease_detection_records', where: 'field_id = ?', whereArgs: [fieldId]);
+      await db.delete('ai_recommendations', where: 'field_id = ?', whereArgs: [fieldId]);
+      return await db.delete('fields', where: 'id = ?', whereArgs: [fieldId]);
+    } catch (e) {
+      print("Delete field database error: $e");
+      return 0;
+    }
   }
 
   Future<int> updateUserPassword(int userId, String newPassword) async {
-    final db = await instance.database;
-    return await db.update(
-      'users',
-      {
-        'password': newPassword,
-        'updated_at': DateTime.now().toIso8601String(),
-      },
-      where: 'id = ?',
-      whereArgs: [userId],
-    );
+    try {
+      final db = await instance.database;
+      return await db.update(
+        'users',
+        {
+          'password': newPassword,
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        where: 'id = ?',
+        whereArgs: [userId],
+      );
+    } catch (e) {
+      print("Update password error: $e");
+      return 0;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getCrops() async {
-    final db = await instance.database;
-    return await db.query('crops');
+    try {
+      final db = await instance.database;
+      return await db.query('crops');
+    } catch (e) {
+      print("Get crops database error: $e");
+      return [];
+    }
   }
 
   // --- Field Crop Relation ---
   Future<int> insertFieldCrop(Map<String, dynamic> fieldCrop) async {
-    final db = await instance.database;
-    return await db.insert('field_crops', fieldCrop);
+    try {
+      final db = await instance.database;
+      return await db.insert('field_crops', fieldCrop);
+    } catch (e) {
+      print("Insert field crop error: $e");
+      return 0;
+    }
   }
 
   Future<Map<String, dynamic>?> getActiveCropForField(int fieldId) async {
-    final db = await instance.database;
-    final results = await db.rawQuery('''
-      SELECT c.*, fc.planting_date, fc.expected_harvest_date, fc.growth_stage 
-      FROM crops c
-      JOIN field_crops fc ON c.id = fc.crop_id
-      WHERE fc.field_id = ? AND fc.is_active = 1
-      LIMIT 1
-    ''', [fieldId]);
-    
-    if (results.isNotEmpty) {
-      return results.first;
+    try {
+      final db = await instance.database;
+      final results = await db.rawQuery('''
+        SELECT c.*, fc.planting_date, fc.expected_harvest_date, fc.growth_stage 
+        FROM crops c
+        JOIN field_crops fc ON c.id = fc.crop_id
+        WHERE fc.field_id = ? AND fc.is_active = 1
+        LIMIT 1
+      ''', [fieldId]);
+      
+      if (results.isNotEmpty) {
+        return results.first;
+      }
+    } catch (e) {
+      print("Get active crop error: $e");
     }
     return null;
   }
 
   // --- Weather Records ---
   Future<int> insertWeatherRecord(Map<String, dynamic> record) async {
-    final db = await instance.database;
-    return await db.insert('weather_records', record);
+    try {
+      final db = await instance.database;
+      return await db.insert('weather_records', record);
+    } catch (e) {
+      print("Insert weather record error: $e");
+      return 0;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getWeatherForField(int fieldId) async {
-    final db = await instance.database;
-    return await db.query('weather_records', where: 'field_id = ?', orderBy: 'recorded_at DESC', limit: 10);
+    try {
+      final db = await instance.database;
+      return await db.query('weather_records', where: 'field_id = ?', orderBy: 'recorded_at DESC', limit: 10);
+    } catch (e) {
+      print("Get weather error: $e");
+      return [];
+    }
   }
 
   // --- Sensor Records ---
   Future<int> insertSensorRecord(Map<String, dynamic> record) async {
-    final db = await instance.database;
-    return await db.insert('sensor_records', record);
+    try {
+      final db = await instance.database;
+      return await db.insert('sensor_records', record);
+    } catch (e) {
+      print("Insert sensor record error: $e");
+      return 0;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getSensorsForField(int fieldId) async {
-    final db = await instance.database;
-    return await db.query('sensor_records', where: 'field_id = ?', orderBy: 'measured_at DESC', limit: 20);
+    try {
+      final db = await instance.database;
+      return await db.query('sensor_records', where: 'field_id = ?', orderBy: 'measured_at DESC', limit: 20);
+    } catch (e) {
+      print("Get sensors error: $e");
+      return [];
+    }
   }
 
   // --- Disease Records ---
   Future<int> insertDiseaseRecord(Map<String, dynamic> record) async {
-    final db = await instance.database;
-    return await db.insert('disease_detection_records', record);
+    try {
+      final db = await instance.database;
+      return await db.insert('disease_detection_records', record);
+    } catch (e) {
+      print("Insert disease record error: $e");
+      return 0;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getDiseaseRecordsForField(int fieldId) async {
-    final db = await instance.database;
-    return await db.query('disease_detection_records', where: 'field_id = ?', orderBy: 'detected_at DESC');
+    try {
+      final db = await instance.database;
+      return await db.query('disease_detection_records', where: 'field_id = ?', orderBy: 'detected_at DESC');
+    } catch (e) {
+      print("Get disease records error: $e");
+      return [];
+    }
   }
 
   // --- AI Recommendations ---
   Future<int> insertAIRecommendation(Map<String, dynamic> rec) async {
-    final db = await instance.database;
-    return await db.insert('ai_recommendations', rec);
+    try {
+      final db = await instance.database;
+      return await db.insert('ai_recommendations', rec);
+    } catch (e) {
+      print("Insert AI recommendation error: $e");
+      return 0;
+    }
   }
 
   Future<Map<String, dynamic>?> getLatestRecommendation(int fieldId) async {
-    final db = await instance.database;
-    final results = await db.query('ai_recommendations', where: 'field_id = ?', orderBy: 'created_at DESC', limit: 1);
-    if (results.isNotEmpty) {
-      return results.first;
+    try {
+      final db = await instance.database;
+      final results = await db.query('ai_recommendations', where: 'field_id = ?', orderBy: 'created_at DESC', limit: 1);
+      if (results.isNotEmpty) {
+        return results.first;
+      }
+    } catch (e) {
+      print("Get latest recommendation error: $e");
     }
     return null;
   }
