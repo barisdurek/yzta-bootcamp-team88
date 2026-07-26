@@ -210,12 +210,33 @@ class _TerraChatScreenState extends State<TerraChatScreen> with AutomaticKeepAli
   }
 
   Widget _buildFormattedText(String rawText, Color textColor) {
-    final lines = rawText.split('\n');
+    // Strip raw bracketed metadata tags like [LABEL]:, [ACTION]:, [REASON]:, [BENEFIT]:
+    String cleaned = rawText
+        .replaceAll(RegExp(r'\[[A-Z_a-z\s]+\]:\s*'), '')
+        .replaceAll(RegExp(r'\[[A-Z_a-z\s]+\]\s*'), '');
+
+    final lines = cleaned.split('\n');
     final List<Widget> widgets = [];
 
     for (var line in lines) {
-      if (line.trim().isEmpty) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) {
         widgets.add(const SizedBox(height: 4));
+        continue;
+      }
+
+      // Handle Markdown Dividers
+      if (trimmed == '---' || trimmed == '***' || trimmed == '___') {
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6.0),
+            child: Divider(
+              height: 1,
+              thickness: 0.8,
+              color: textColor.withOpacity(0.15),
+            ),
+          ),
+        );
         continue;
       }
 

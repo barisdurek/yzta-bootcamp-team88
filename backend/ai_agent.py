@@ -17,11 +17,15 @@ def load_system_prompt() -> str:
 
 def clean_agent_output(text: str) -> str:
     """
-    Strips internal thinking, metadata echo, backticks, English outline headers, or Gemma reasoning trees.
-    Returns only the clean, final Turkish response for the farmer.
+    Strips internal thinking, metadata echo, backticks, English outline headers, or bracketed labels like [LABEL]:.
+    Returns only clean, formatted Turkish response for the farmer.
     """
     if not text:
         return ""
+
+    import re
+    # Remove bracketed labels like [LABEL]:, [ACTION]:, [REASON]:, [BENEFIT]:, [KART BAŞLIĞI]:
+    text = re.sub(r'\[[A-Z_a-z\s]+\]:\s*', '', text)
 
     lines = text.split("\n")
     cleaned_lines = []
