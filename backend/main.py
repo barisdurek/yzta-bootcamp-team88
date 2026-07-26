@@ -184,12 +184,17 @@ def get_ai_recommendation(
     db: Session = Depends(get_db),
 ):
     try:
-        combined_source_data = dict(request.source_data)
+        source_data = payload.get("source_data") if "source_data" in payload else payload
+        combined_source_data = dict(source_data) if isinstance(source_data, dict) else {}
+        
+        field_id = payload.get("field_id") or payload.get("field_info", {}).get("field_id")
+        recommendation_type = payload.get("recommendation_type", "Genel Tavsiye")
+        risk_level = payload.get("risk_level", "Düşük")
         
         # Try finding field in DB if DB and valid UUID are available
-        if db is not None:
+        if db is not None and field_id:
             try:
-                field_uuid = uuid.UUID(request.field_id)
+                field_uuid = uuid.UUID(str(field_id))
                 field = get_field_by_id(db, field_uuid)
                 if field:
                     combined_source_data["field"] = {
@@ -212,16 +217,16 @@ def get_ai_recommendation(
 
         # Persist if DB available
         created_rec = None
-        if db is not None:
+        if db is not None and field_id:
             try:
-                field_uuid = uuid.UUID(request.field_id)
+                field_uuid = uuid.UUID(str(field_id))
                 created_rec = create_ai_recommendation(
                     db,
                     {
                         "field_id": field_uuid,
-                        "recommendation_type": request.recommendation_type,
+                        "recommendation_type": recommendation_type,
                         "recommendation_text": recommendation_text,
-                        "risk_level": request.risk_level,
+                        "risk_level": risk_level,
                         "source_data": combined_source_data,
                     },
                 )
@@ -232,10 +237,10 @@ def get_ai_recommendation(
             "message": "AI önerisi üretildi.",
             "recommendation": {
                 "id": str(created_rec.id) if created_rec else str(uuid.uuid4()),
-                "field_id": request.field_id,
-                "recommendation_type": request.recommendation_type,
+                "field_id": str(field_id) if field_id else str(uuid.uuid4()),
+                "recommendation_type": recommendation_type,
                 "recommendation_text": recommendation_text,
-                "risk_level": request.risk_level or "Düşük",
+                "risk_level": risk_level or "Düşük",
                 "source_data": combined_source_data,
                 "created_at": created_rec.created_at.isoformat() if created_rec else datetime.now().isoformat(),
             },
