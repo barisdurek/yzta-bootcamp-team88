@@ -41,6 +41,7 @@ def get_db():
         yield None
         return
     db = SessionLocal()
+
     try:
         yield db
     finally:
@@ -52,3 +53,15 @@ def test_database_connection():
         raise Exception("Database engine is not initialized.")
     with engine.connect() as connection:
         connection.execute(text("SELECT 1"))
+
+
+def create_database_tables():
+    from models import (
+        AIRecommendation,
+        AnonymousRiskLog,
+        Field,
+        SensorRecord,
+        User,
+    )
+
+    Base.metadata.create_all(bind=engine)

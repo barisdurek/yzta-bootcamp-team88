@@ -5,13 +5,13 @@ from fastapi import FastAPI, File, UploadFile, Query, HTTPException, status, Dep
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from model_loader import PlantModelLoader
 from weather_service import get_weather_forecast_by_coordinates, get_weather_by_coordinates, filter_weather_data
 from irrigation import calculate_optimal_irrigation
 from leaching import calculate_npk_leaching
-from ai_agent import generate_proactive_recommendation
+from central_ai_agent import CentralAIAgent
 from sqlalchemy.orm import Session
 
 from database import get_db, test_database_connection
@@ -23,8 +23,8 @@ from crud import (
     create_field as create_field_db,
     get_all_fields,
     create_ai_recommendation,
-    get_field_by_id,
-    
+    get_recommendations_by_field_id,
+    create_sensor_record as create_sensor_record_db,
 )
 
 try:
@@ -104,6 +104,17 @@ class FieldCreateSchema(BaseModel):
     soil_type: Optional[str] = None
     irrigation_type: Optional[str] = None  
 
+class SensorRecordCreateSchema(BaseModel):
+    field_id: str
+    soil_moisture_pct: Optional[float] = None
+    soil_temp_c: Optional[float] = None
+    air_temp_c: Optional[float] = None
+    air_humidity_pct: Optional[float] = None
+    ph: Optional[float] = None
+    ec: Optional[float] = None
+    recorded_at: Optional[datetime] = None
+
+
 class AIRecommendationRequest(BaseModel):
     field_id: str
     recommendation_type: str = "general"
@@ -177,86 +188,140 @@ def do_leaching_calc(req: LeachingRequest):
 
 @app.post(
     "/ai/recommend",
-    summary="AI önerisi üretir ve veritabanına kaydeder"
+    summary="Merkezi AI Agent ile öneri üretir ve veritabanına kaydeder",
 )
 def get_ai_recommendation(
-    payload: Dict[str, Any],
+    request: AIRecommendationRequest,
     db: Session = Depends(get_db),
 ):
     try:
-        source_data = payload.get("source_data") if "source_data" in payload else payload
-        combined_source_data = dict(source_data) if isinstance(source_data, dict) else {}
-        
-        field_id = payload.get("field_id") or payload.get("field_info", {}).get("field_id")
-        recommendation_type = payload.get("recommendation_type", "Genel Tavsiye")
-        risk_level = payload.get("risk_level", "Düşük")
-        
-        # Try finding field in DB if DB and valid UUID are available
-        if db is not None and field_id:
-            try:
-                field_uuid = uuid.UUID(str(field_id))
-                field = get_field_by_id(db, field_uuid)
-                if field:
-                    combined_source_data["field"] = {
-                        "id": str(field.id),
-                        "user_id": str(field.user_id),
-                        "field_name": field.field_name,
-                        "province": field.province,
-                        "district": field.district,
-                        "latitude": float(field.latitude),
-                        "longitude": float(field.longitude),
-                        "area_m2": float(field.area_m2) if field.area_m2 is not None else None,
-                        "soil_type": field.soil_type,
-                        "irrigation_type": field.irrigation_type,
-                    }
-            except Exception as e:
-                print(f"INFO: Database field lookup bypassed: {e}")
+        try:
+            field_uuid = uuid.UUID(request.field_id)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="field_id geçerli bir UUID olmalıdır.",
+            ) from exc
 
-        advice = generate_proactive_recommendation(combined_source_data)
-        recommendation_text = advice if isinstance(advice, str) else json.dumps(advice, ensure_ascii=False)
+        agent = CentralAIAgent(db)
 
-        # Persist if DB available
-        created_rec = None
-        if db is not None and field_id:
-            try:
-                field_uuid = uuid.UUID(str(field_id))
-                created_rec = create_ai_recommendation(
-                    db,
-                    {
-                        "field_id": field_uuid,
-                        "recommendation_type": recommendation_type,
-                        "recommendation_text": recommendation_text,
-                        "risk_level": risk_level,
-                        "source_data": combined_source_data,
-                    },
-                )
-            except Exception as e:
-                print(f"INFO: Database persistence bypassed: {e}")
+        agent_result = agent.run(
+            field_id=str(field_uuid),
+            source_data=request.source_data,
+        )
+
+        recommendation_text = agent_result["recommendation_text"]
+        context = agent_result["context"]
+
+        if not isinstance(recommendation_text, str):
+            recommendation_text = json.dumps(
+                recommendation_text,
+                ensure_ascii=False,
+            )
+
+        created_recommendation = create_ai_recommendation(
+            db,
+            {
+                "field_id": field_uuid,
+                "recommendation_type": request.recommendation_type,
+                "recommendation_text": recommendation_text,
+                "risk_level": request.risk_level,
+                "source_data": context,
+            },
+        )
 
         return {
-            "message": "AI önerisi üretildi.",
+            "message": (
+                "Merkezi AI Agent önerisi üretildi "
+                "ve veritabanına kaydedildi."
+            ),
             "recommendation": {
-                "id": str(created_rec.id) if created_rec else str(uuid.uuid4()),
-                "field_id": str(field_id) if field_id else str(uuid.uuid4()),
-                "recommendation_type": recommendation_type,
-                "recommendation_text": recommendation_text,
-                "risk_level": risk_level or "Düşük",
-                "source_data": combined_source_data,
-                "created_at": created_rec.created_at.isoformat() if created_rec else datetime.now().isoformat(),
+                "id": str(created_recommendation.id),
+                "field_id": str(created_recommendation.field_id),
+                "recommendation_type": created_recommendation.recommendation_type,
+                "recommendation_text": created_recommendation.recommendation_text,
+                "risk_level": created_recommendation.risk_level,
+                "source_data": created_recommendation.source_data,
+                "created_at": created_recommendation.created_at,
             },
         }
 
-    except Exception as e:
-        if db:
-            try:
-                db.rollback()
-            except Exception:
-                pass
+    except HTTPException:
+        raise
+
+    except ValueError as exc:
+        error_message = str(exc)
+
+        if "tarla bulunamadı" in error_message.casefold():
+            status_code = status.HTTP_404_NOT_FOUND
+        else:
+            status_code = status.HTTP_400_BAD_REQUEST
+
+        raise HTTPException(
+            status_code=status_code,
+            detail=error_message,
+        ) from exc
+
+    except Exception as exc:
+        db.rollback()
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"AI önerisi oluşturulamadı: {e}",
-        ) from e
+            detail=f"AI önerisi oluşturulamadı: {exc}",
+        ) from exc
+
+@app.get(
+    "/ai/recommendations/{field_id}",
+    summary="Bir tarlaya ait AI önerilerini listeler",
+)
+def list_ai_recommendations(
+    field_id: str,
+    db: Session = Depends(get_db),
+):
+    try:
+        try:
+            field_uuid = uuid.UUID(field_id)
+
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="field_id geçerli bir UUID olmalıdır.",
+            ) from exc
+
+        recommendations = get_recommendations_by_field_id(
+            db=db,
+            field_id=field_uuid,
+        )
+
+        return {
+            "field_id": field_uuid,
+            "count": len(recommendations),
+            "recommendations": [
+                {
+                    "id": recommendation.id,
+                    "field_id": recommendation.field_id,
+                    "recommendation_type": (
+                        recommendation.recommendation_type
+                    ),
+                    "recommendation_text": (
+                        recommendation.recommendation_text
+                    ),
+                    "risk_level": recommendation.risk_level,
+                    "source_data": recommendation.source_data,
+                    "created_at": recommendation.created_at,
+                }
+                for recommendation in recommendations
+            ],
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"AI önerileri alınamadı: {exc}",
+        ) from exc
 
 # Regional Risk Sharing Endpoints (Modül 4)
 @app.get("/risk-logs", summary="Bölgesel hastalık risk kayıtlarını listeler")
@@ -386,3 +451,59 @@ def create_field(
             status_code=500,
             detail=f"Tarla oluşturulamadı: {e}",
         )
+
+@app.post(
+    "/sensor-records",
+    summary="Yeni sensör ölçümü kaydeder",
+)
+def create_sensor_record(
+    sensor: SensorRecordCreateSchema,
+    db: Session = Depends(get_db),
+):
+    try:
+        sensor_data = sensor.model_dump(exclude_none=True)
+
+        if "recorded_at" not in sensor_data:
+            sensor_data["recorded_at"] = datetime.now(timezone.utc)
+
+        created_sensor_record = create_sensor_record_db(
+            db,
+            sensor_data,
+        )
+
+        return {
+            "message": "Sensör kaydı başarıyla oluşturuldu.",
+            "sensor_record": {
+                "id": created_sensor_record.id,
+                "field_id": created_sensor_record.field_id,
+                "soil_moisture_pct": created_sensor_record.soil_moisture_pct,
+                "soil_temp_c": created_sensor_record.soil_temp_c,
+                "air_temp_c": created_sensor_record.air_temp_c,
+                "air_humidity_pct": created_sensor_record.air_humidity_pct,
+                "ph": created_sensor_record.ph,
+                "ec": created_sensor_record.ec,
+                "recorded_at": created_sensor_record.recorded_at,
+                "created_at": created_sensor_record.created_at,
+            },
+        }
+
+    except ValueError as exc:
+        error_message = str(exc)
+
+        if "tarla bulunamadı" in error_message.casefold():
+            status_code = status.HTTP_404_NOT_FOUND
+        else:
+            status_code = status.HTTP_400_BAD_REQUEST
+
+        raise HTTPException(
+            status_code=status_code,
+            detail=error_message,
+        ) from exc
+
+    except Exception as exc:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Sensör kaydı oluşturulamadı: {exc}",
+        ) from exc
