@@ -98,15 +98,15 @@ class Field(Base):
     )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
-    UUID(as_uuid=True),
-    ForeignKey("users.id"),
-    nullable=False,
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False,
     )
 
     region_id: Mapped[uuid.UUID | None] = mapped_column(
-    UUID(as_uuid=True),
-    nullable=True,
-)
+        UUID(as_uuid=True),
+        nullable=True,
+    )
 
     field_name: Mapped[str] = mapped_column(
         String,
@@ -159,6 +159,65 @@ class Field(Base):
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP"),
     )
+
+
+class SensorRecord(Base):
+    __tablename__ = "sensor_records"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
+    )
+
+    field_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("fields.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    soil_moisture_pct: Mapped[Decimal | None] = mapped_column(
+        Numeric,
+        nullable=True,
+    )
+
+    soil_temp_c: Mapped[Decimal | None] = mapped_column(
+        Numeric,
+        nullable=True,
+    )
+
+    air_temp_c: Mapped[Decimal | None] = mapped_column(
+        Numeric,
+        nullable=True,
+    )
+
+    air_humidity_pct: Mapped[Decimal | None] = mapped_column(
+        Numeric,
+        nullable=True,
+    )
+
+    ph: Mapped[Decimal | None] = mapped_column(
+        Numeric,
+        nullable=True,
+    )
+
+    ec: Mapped[Decimal | None] = mapped_column(
+        Numeric,
+        nullable=True,
+    )
+
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("CURRENT_TIMESTAMP"),
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("CURRENT_TIMESTAMP"),
+    )
+
 
 class AIRecommendation(Base):
     __tablename__ = "ai_recommendations"

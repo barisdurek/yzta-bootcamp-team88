@@ -1,88 +1,68 @@
-import os
 import json
+import os
 from pathlib import Path
-from typing import Any, Dict
-import google.generativeai as genai
-from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
-# Load prompt text
+import google.generativeai as genai
+
+
+# ---------------------------------------------------------
+# Prompt dosyası
+# ---------------------------------------------------------
+
 BASE_DIR = Path(__file__).resolve().parent
-PROMPT_PATH = BASE_DIR.parent / "Tarla Gözcüsü AI Agent Sistem Promptu.txt"
+
+PROMPT_PATH = (
+    BASE_DIR.parent
+    / "Tarla Gözcüsü AI Agent Sistem Promptu.txt"
+)
+
 
 def load_system_prompt() -> str:
+    """
+    Sistem promptunu metin dosyasından yükler.
+
+    Dosya bulunamazsa varsayılan sistem promptunu döndürür.
+    """
+
     if PROMPT_PATH.exists():
-        with open(PROMPT_PATH, "r", encoding="utf-8") as f:
-            return f.read()
-    return """Sen, Tarla Gözcüsü proaktif tarımsal karar destek sisteminin Merkezi AI Ajanı ve çiftçinin en güvenilir, bilgili ve pratik Ziraat Mühendisi asistanısın."""
+        with open(
+            PROMPT_PATH,
+            "r",
+            encoding="utf-8",
+        ) as file:
+            return file.read()
 
-def clean_agent_output(text: str) -> str:
+    return (
+        "Sen, Tarla Gözcüsü proaktif tarımsal karar destek "
+        "sisteminin Merkezi AI Ajanı ve çiftçinin en güvenilir, "
+        "bilgili ve pratik Ziraat Mühendisi asistanısın."
+    )
+
+
+# ---------------------------------------------------------
+# Gemini / ana öneri üretim fonksiyonu
+# ---------------------------------------------------------
+
+def generate_proactive_recommendation(
+    tarla_data: Dict[str, Any],
+) -> str:
     """
-    Strips internal thinking, metadata echo, backticks, English outline headers, or bracketed labels like [LABEL]:.
-    Returns only clean, formatted Turkish response for the farmer.
+    Tarla verilerini analiz ederek öneri raporu üretir.
+
+    Geçerli bir GEMINI_API_KEY varsa Gemini kullanılır.
+    Gemini çağrısı başarısız olursa kural tabanlı rapor üretilir.
     """
-    if not text:
-        return ""
 
-    import re
-    # Remove bracketed labels like [LABEL]:, [ACTION]:, [REASON]:, [BENEFIT]:, [KART BAŞLIĞI]:
-    text = re.sub(r'\[[A-Z_a-z\s]+\]:\s*', '', text)
-
-    lines = text.split("\n")
-    cleaned_lines = []
-    
-    # English outline/reasoning keywords to skip
-    skip_keywords = [
-        "structure:", "greeting:", "cnn check:", "analysis:", "explanation:",
-        "persona:", "tone:", "language level:", "input data analysis:", 
-        "farmer's question:", "symptom:", "common causes:", "directly address",
-        "no internal thoughts", "use the provided system prompt", "greeting.", "action plan."
-    ]
-
-    for line in lines:
-        stripped = line.strip()
-        lower_line = stripped.lower()
-
-        # Skip backticks or raw metadata keys
-        if stripped.startswith("`") or stripped.startswith("* `") or stripped.startswith("- `"):
-            continue
-
-        # Skip numbered outline items like "1. Greeting.", "2. Status Assessment", etc.
-        if any(lower_line.startswith(p) for p in ["1. greeting", "2. status assessment", "3. possible causes", "4. action plan"]):
-            continue
-
-        # Skip bullet points starting with English reasoning labels
-        if any(marker in lower_line for marker in skip_keywords):
-            continue
-
-        cleaned_lines.append(line)
-
-    result = "\n".join(cleaned_lines).strip()
-    
-    # Strip stray trailing quotes after greeting.
-    result = result.replace('".', '.').replace('"', '')
-
-    # Ensure result starts cleanly with greeting or icon
-    lower_res = result.lower()
-    turkish_triggers = ["merhaba", "selam", "🌾", "🍃", "🔴", "⚠️", "değerli çiftçimiz", "tarla gözcüsü"]
-    first_idx = -1
-    for trigger in turkish_triggers:
-        idx = lower_res.find(trigger)
-        if idx != -1:
-            if first_idx == -1 or idx < first_idx:
-                first_idx = idx
-
-    if first_idx > 0:
-        result = result[first_idx:].strip()
-
-    return result if len(result) > 10 else text
-
-def generate_proactive_recommendation(tarla_data: Dict[str, Any]) -> str:
-    """
-    Orchestrates the AI Agent report generation using standard Gemini models.
-    """
     api_key = os.getenv("GEMINI_API_KEY")
-    
-    if api_key and api_key != "YOUR_GEMINI_KEY" and len(api_key.strip()) > 10:
+
+    api_key_is_valid = (
+        api_key
+        and api_key != "YOUR_GEMINI_KEY"
+        and len(api_key.strip()) > 10
+    )
+
+    if api_key_is_valid:
         try:
             genai.configure(api_key=api_key.strip())
             system_instruction = load_system_prompt()
@@ -135,7 +115,7 @@ def generate_proactive_recommendation(tarla_data: Dict[str, Any]) -> str:
                     )
                     response = model.generate_content(prompt)
                     if response and response.text and len(response.text.strip()) > 10:
-                        cleaned = clean_agent_output(response.text)
+                        cleaned = response.text.strip()
                         print(f"Gemini API SUCCESS using model: {model_name}")
                         return cleaned
                 except Exception as e:
@@ -146,149 +126,762 @@ def generate_proactive_recommendation(tarla_data: Dict[str, Any]) -> str:
     print("Gemini API call bypassed or failed on all models, using expert fallback rule engine.")
     return generate_mock_expert_advice(tarla_data)
 
-def generate_mock_expert_advice(data: Dict[str, Any]) -> str:
-    """
-    Algorithmic agent report matching the persona, tone, rules, and format of the system prompt.
-    """
-    user_info = data.get("user_info", {})
-    field_info = data.get("field_info", {})
-    crop_db = data.get("crop_db_info", {})
-    history = data.get("farmer_history", [])
-    sensors = data.get("sensor_records", {})
-    forecast = data.get("weather_forecast", [])
-    cnn_result = data.get("cnn_disease_result", {})
-
-    user_query = ""
-    if history and isinstance(history, list) and len(history) > 0:
-        last_item = history[-1]
-        if isinstance(last_item, dict):
-            user_query = str(last_item.get("details", "")).lower()
-
-    farmer_name = user_info.get("name", "Çiftçimiz")
-    location = user_info.get("location", "Ege Bölgesi")
-    field_name = field_info.get("field_name", "Tarlanız")
-    crop_name = field_info.get("crop_name", "Mahsul")
-    growth_stage = field_info.get("growth_stage", "Gelişim")
-    
-    report = []
-    
-    # 1. Rule 3: CNN Disease Detection Alarm
-    disease_detected = cnn_result.get("detected", False)
-    disease_name = cnn_result.get("disease_name")
-    confidence = cnn_result.get("confidence_pct", 0)
-    
-    if disease_detected and disease_name:
-        report.append(f"🔴 **ACİL UYARI: {disease_name} Hastalığı Tespit Edildi!**\n")
-        report.append(f"Yapılan görsel analiz sonucunda, {crop_name.lower()} yapraklarında **%{confidence} güven oranıyla {disease_name}** hastalığı tespit edilmiştir. Nem oranının yüksek olması hastalığın yayılmasını hızlandırabilir. Vakit kaybetmeden müdahale etmeliyiz.\n")
-    else:
-        # Check heavy rain rule
-        has_heavy_rain = False
-        rain_days = 0
-        for day in forecast:
-            precip = float(day.get("precipitation_mm", 0.0) or 0.0)
-            cond = day.get("condition", "")
-            if precip >= 15.0 or "Şiddetli" in cond or "Yoğun" in cond:
-                rain_days += 1
-        if rain_days >= 1:
-            has_heavy_rain = True
+            # Gemini'nin context içindeki gerçek alanları kullanmasını
+            # sağlayan ek ve kesin talimatlar.
             
-        if has_heavy_rain:
-            report.append(f"⚠️ **KRİTİK HAVA UYARISI: Şiddetli Yağış Geliyor!**\n")
-            report.append(f"**Sulama yapma ve gübre yıkanmasına (NPK kaybına) karşı dikkatli ol.** Önümüzdeki günlerde bölgede yoğun yağışlar tahmin edilmektedir.\n")
-        elif "yeşil" in user_query or "sarı" in user_query or "renk" in user_query or "yaprak" in user_query:
-            report.append(f"🍃 **Ziraat Mühendisi Teşhisi (Yaprak Renk Değişimi & Kloroz):**\n")
-            report.append(f"Merhaba {farmer_name}, {field_name} tarlanızdaki {crop_name} yapraklarında gözlemlediğiniz açık yeşil/sarı renk değişimi (kloroz) 2 ana sebepten kaynaklanır:\n")
-            report.append(f"1. **Azot (N) Noksanlığı:** Bitki gelişim döneminde yeterli azotu alamadığında klorofil sentezi yavaşlar ve yapraklar açık yeşile/sarıya döner.")
-            report.append(f"2. **Aşırı Sulama / Kök Oksijensizliği:** Toprak neminin yüksek kalması kök solunumunu ve besin emilimini engeller.\n")
-            report.append(f"💡 **Tavsiye:** Damlama sulama ile azot takviyesi yapın ve toprak havalanmasını sağlayın.\n")
-        else:
-            report.append(f"🌾 **Tarla Gözcüsü Proaktif Durum Raporu**\n")
-            report.append(f"Merhaba {farmer_name}, {field_name} tarlanızdaki güncel koşulları analiz ettim. Genel durum stabil görünüyor.\n")
-            
-    # 2. Durum Değerlendirmesi
-    report.append(f"🌾 **Durum Değerlendirmesi:**")
-    report.append(f"*   **Tarla:** {field_name} ({crop_name} - {growth_stage} Evresi)")
-    
-    # Sensor vs Crop DB comparison (Rule 6)
-    soil_moist = sensors.get("soil_moisture_pct", 50)
-    soil_temp = sensors.get("soil_temp_c", 22)
-    
-    opt_moist_str = crop_db.get("optimum_moisture_range_pct", "40-60 %")
-    opt_temp_str = crop_db.get("optimum_temp_range", "20-30 C")
-    
-    # Try to parse ranges
+# ---------------------------------------------------------
+# Yardımcı fonksiyonlar
+# ---------------------------------------------------------
+
+def _to_float(
+    value: Any,
+) -> Optional[float]:
+    """
+    Verilen değeri float'a dönüştürür.
+
+    Dönüştürülemeyen veya boş değerlerde None döndürür.
+    """
+
+    if value is None:
+        return None
+
     try:
-        m_min, m_max = [float(x.strip().replace('%','')) for x in opt_moist_str.split('-')]
-    except:
-        m_min, m_max = 40.0, 60.0
-        
-    moist_status = "Optimum seviyede"
-    if soil_moist < m_min:
-        moist_status = f"Düşük (Optimum aralık: {opt_moist_str})"
-    elif soil_moist > m_max:
-        moist_status = f"Yüksek (Optimum aralık: {opt_moist_str})"
-        
-    report.append(f"*   **Toprak Nemi:** %{soil_moist} ({moist_status})")
-    report.append(f"*   **Toprak Sıcaklığı:** {soil_temp}°C (Optimum aralık: {opt_temp_str})")
-    
-    # Weather summary
+        return float(value)
+
+    except (TypeError, ValueError):
+        return None
+
+
+def _format_number(
+    value: Any,
+) -> str:
+    """
+    Sayısal değerleri okunabilir biçimde formatlar.
+
+    Örnek:
+    38.0 -> 38
+    38.5 -> 38.5
+    """
+
+    number = _to_float(value)
+
+    if number is None:
+        return "Bilinmiyor"
+
+    if number.is_integer():
+        return str(int(number))
+
+    return str(round(number, 2))
+
+
+def _parse_range(
+    value: Any,
+    default_min: float,
+    default_max: float,
+) -> Tuple[float, float]:
+    """
+    '40-60', '40-60 %' veya '20-30 C' biçimindeki
+    aralık metnini iki float değere dönüştürür.
+    """
+
+    if value is None:
+        return default_min, default_max
+
+    try:
+        clean_value = (
+            str(value)
+            .replace("%", "")
+            .replace("°C", "")
+            .replace("C", "")
+            .strip()
+        )
+
+        parts = clean_value.split("-")
+
+        if len(parts) != 2:
+            return default_min, default_max
+
+        minimum = float(parts[0].strip())
+        maximum = float(parts[1].strip())
+
+        return minimum, maximum
+
+    except (TypeError, ValueError):
+        return default_min, default_max
+
+
+def _get_heavy_rain_status(
+    forecast: List[Dict[str, Any]],
+) -> bool:
+    """
+    Tahmin verisinde şiddetli yağış olup olmadığını kontrol eder.
+    """
+
+    for day in forecast:
+        precipitation = _to_float(
+            day.get("precipitation_mm")
+        )
+
+        condition = str(
+            day.get("condition", "")
+        ).lower()
+
+        if (
+            precipitation is not None
+            and precipitation >= 15.0
+        ):
+            return True
+
+        heavy_rain_keywords = (
+            "şiddetli",
+            "yoğun",
+            "sağanak",
+            "fırtına",
+        )
+
+        if any(
+            keyword in condition
+            for keyword in heavy_rain_keywords
+        ):
+            return True
+
+    return False
+
+
+# ---------------------------------------------------------
+# Kural tabanlı yedek rapor
+# ---------------------------------------------------------
+
+def generate_mock_expert_advice(
+    data: Dict[str, Any],
+) -> str:
+    """
+    Gemini kullanılamadığında, sistemde bulunan gerçek verilerle
+    kural tabanlı tarımsal durum raporu oluşturur.
+
+    Context içinde olmayan değerler tahmin edilmez.
+    """
+
+    user_info = data.get(
+        "user_info",
+        {},
+    ) or {}
+
+    field_info = data.get(
+        "field_info",
+        {},
+    ) or {}
+
+    crop_db = data.get(
+        "crop_db_info",
+        {},
+    ) or {}
+
+    history = data.get(
+        "farmer_history",
+        [],
+    ) or []
+
+    sensors = data.get(
+        "sensor_records",
+        {},
+    ) or {}
+
+    forecast = data.get(
+        "weather_forecast",
+        [],
+    ) or []
+
+    cnn_result = data.get(
+        "cnn_disease_result",
+        {},
+    ) or {}
+
+    irrigation = data.get(
+        "irrigation_analysis",
+        {},
+    ) or {}
+
+    leaching = data.get(
+        "leaching_analysis",
+        {},
+    ) or {}
+
+    farmer_name = (
+        user_info.get("name")
+        or "Çiftçimiz"
+    )
+
+    field_name = (
+        field_info.get("field_name")
+        or "Tarlanız"
+    )
+
+    # Mahsul adı field_info'dan değil,
+    # Crop Service verisinden alınır.
+    crop_name = crop_db.get(
+        "crop_name"
+    )
+
+    crop_text = (
+        str(crop_name).lower()
+        if crop_name
+        else "bitki"
+    )
+
+    disease_detected = bool(
+        cnn_result.get("detected", False)
+    )
+
+    disease_name = cnn_result.get(
+        "disease_name"
+    )
+
+    confidence = _to_float(
+        cnn_result.get("confidence_pct")
+    )
+
+    has_heavy_rain = (
+        _get_heavy_rain_status(
+            forecast
+        )
+    )
+
+    report: List[str] = []
+
+    # -----------------------------------------------------
+    # 1. Ana uyarı veya rapor başlığı
+    # -----------------------------------------------------
+
+    if disease_detected and disease_name:
+        report.append(
+            f"🔴 **ACİL UYARI: "
+            f"{disease_name} Hastalığı Tespit Edildi!**\n"
+        )
+
+        confidence_text = (
+            f"%{_format_number(confidence)} güven oranıyla "
+            if confidence is not None
+            else ""
+        )
+
+        report.append(
+            "Yapılan görsel analiz sonucunda, "
+            f"{crop_text} yapraklarında "
+            f"**{confidence_text}{disease_name}** "
+            "hastalığı tespit edilmiştir. "
+            "Hastalığın yayılımını sınırlamak için "
+            "arazi kontrolü yapılmalıdır.\n"
+        )
+
+    elif has_heavy_rain:
+        report.append(
+            "⚠️ **KRİTİK HAVA UYARISI: "
+            "Şiddetli Yağış Bekleniyor!**\n"
+        )
+
+        report.append(
+            "**Sulama yapmayın ve gübre yıkanması riskine "
+            "karşı dikkatli olun.** Tahmin verilerinde yoğun "
+            "yağış riski görülmektedir.\n"
+        )
+
+    else:
+        report.append(
+            "🌾 **Tarla Gözcüsü Proaktif Durum Raporu**\n"
+        )
+
+        report.append(
+            f"Merhaba {farmer_name}, "
+            f"{field_name} tarlanızdaki güncel koşulları "
+            "analiz ettim.\n"
+        )
+
+    # -----------------------------------------------------
+    # 2. Durum değerlendirmesi
+    # -----------------------------------------------------
+
+    report.append(
+        "🌾 **Durum Değerlendirmesi:**"
+    )
+
+    if crop_name:
+        report.append(
+            f"*   **Tarla:** "
+            f"{field_name} ({crop_name})"
+        )
+    else:
+        report.append(
+            f"*   **Tarla:** {field_name}"
+        )
+
+    # -----------------------------------------------------
+    # Sensör verileri
+    # -----------------------------------------------------
+
+    soil_moisture = _to_float(
+        sensors.get("soil_moisture_pct")
+    )
+
+    soil_temperature = _to_float(
+        sensors.get("soil_temp_c")
+    )
+
+    air_temperature = _to_float(
+        sensors.get("air_temp_c")
+    )
+
+    air_humidity = _to_float(
+        sensors.get("air_humidity_pct")
+    )
+
+    ph_value = _to_float(
+        sensors.get("ph")
+    )
+
+    ec_value = _to_float(
+        sensors.get("ec")
+    )
+
+    optimum_moisture_text = crop_db.get(
+        "optimum_moisture_range_pct"
+    )
+
+    optimum_temperature_text = crop_db.get(
+        "optimum_temp_range"
+    )
+
+    moisture_min, moisture_max = _parse_range(
+        optimum_moisture_text,
+        default_min=40.0,
+        default_max=60.0,
+    )
+
+    temperature_min, temperature_max = _parse_range(
+        optimum_temperature_text,
+        default_min=20.0,
+        default_max=30.0,
+    )
+
+    moisture_status: Optional[str] = None
+
+    if soil_moisture is not None:
+        if soil_moisture < moisture_min:
+            moisture_status = (
+                "Düşük"
+            )
+
+        elif soil_moisture > moisture_max:
+            moisture_status = (
+                "Yüksek"
+            )
+
+        else:
+            moisture_status = (
+                "Optimum seviyede"
+            )
+
+        if optimum_moisture_text:
+            moisture_status += (
+                f" (Optimum aralık: "
+                f"{optimum_moisture_text})"
+            )
+
+        report.append(
+            "*   **Toprak Nemi:** "
+            f"%{_format_number(soil_moisture)} "
+            f"({moisture_status})"
+        )
+
+    else:
+        report.append(
+            "*   **Toprak Nemi:** "
+            "Sensör verisi bulunamadı."
+        )
+
+    if soil_temperature is not None:
+        if (
+            soil_temperature < temperature_min
+            or soil_temperature > temperature_max
+        ):
+            temperature_status = (
+                "Optimum aralık dışında"
+            )
+        else:
+            temperature_status = (
+                "Optimum aralıkta"
+            )
+
+        if optimum_temperature_text:
+            temperature_status += (
+                f" (Optimum aralık: "
+                f"{optimum_temperature_text})"
+            )
+
+        report.append(
+            "*   **Toprak Sıcaklığı:** "
+            f"{_format_number(soil_temperature)}°C "
+            f"({temperature_status})"
+        )
+
+    else:
+        report.append(
+            "*   **Toprak Sıcaklığı:** "
+            "Sensör verisi bulunamadı."
+        )
+
+    if air_temperature is not None:
+        report.append(
+            "*   **Sensör Hava Sıcaklığı:** "
+            f"{_format_number(air_temperature)}°C"
+        )
+
+    if air_humidity is not None:
+        report.append(
+            "*   **Sensör Hava Nemi:** "
+            f"%{_format_number(air_humidity)}"
+        )
+
+    if ph_value is not None:
+        report.append(
+            "*   **Toprak pH:** "
+            f"{_format_number(ph_value)}"
+        )
+
+    if ec_value is not None:
+        report.append(
+            "*   **Toprak EC:** "
+            f"{_format_number(ec_value)}"
+        )
+
+    # -----------------------------------------------------
+    # Hava durumu
+    # -----------------------------------------------------
+
     if forecast:
         today_weather = forecast[0]
-        report.append(f"*   **Hava Durumu:** Bugün sıcaklık {today_weather.get('temp_c')}°C, nem %{today_weather.get('humidity_pct')} ve durum '{today_weather.get('condition')}'.")
-        
-    # History check (Rule 5)
-    last_irrigation_hours = None
-    for hist in reversed(history):
-        if hist.get("action") == "sulama":
-            # Let's say it was recent for representation
-            last_irrigation_hours = 24
-            break
-            
-    if last_irrigation_hours is not None:
-        report.append(f"*   **Geçmiş İşlemler:** Yakın zamanda sulama yapılmış. Toprakta aşırı su birikmesini önlemek adına ek sulama yapılmamalıdır.")
-        
-    report.append("") # newline
-    
-    # 3. Action plan and treatment (Rule 3 remedies)
-    if disease_detected:
-        report.append(f"🧪 **Tedavi ve Önlem Reçetesi:**")
-        # Custom advice based on disease
-        if "Mildiyö" in disease_name or "blight" in disease_name.lower():
-            report.append(f"*   **Organik Çözüm:** Bakırlı fungusitler (organik tarıma uygun bakır hidroksit veya bakır oksi klorür içerikli) kullanarak bitki yüzeyini kaplayın. Hastalıklı yaprakları budayıp tarladan uzaklaştırarak yakın.")
-            report.append(f"*   **Kimyasal Çözüm:** Hastalığın hızlı yayılmasını önlemek için sistemik etkili *Metalaxyl* veya *Cymoxanil* aktif maddeli ruhsatlı ilaçlar tercih edilmelidir.")
-        elif "Leke" in disease_name or "spot" in disease_name.lower() or "Virus" in disease_name or "virus" in disease_name.lower():
-            report.append(f"*   **Organik Çözüm:** Neem yağı spreyi uygulayarak böcek vektörleri kontrol altına alın. Hastalıklı bitkileri söküp imha edin.")
-            report.append(f"*   **Kimyasal Çözüm:** Bakır sülfat bazlı preparatlar veya sistemik antiviral/antifungal koruyucular kullanın.")
-        else:
-            report.append(f"*   **Organik Çözüm:** Kükürtlü organik toz püskürtmesi yapın. Tarladaki havalandırmayı artırmak için budama yapın.")
-            report.append(f"*   **Kimyasal Çözüm:** Sınıfına uygun tescilli geniş spektrumlu bir fungisit uygulayın.")
-            
-        report.append("\n📌 **Aksiyon Planı:**")
-        report.append(f"1.  **Hemen hastalıklı yaprakları budayın ve tarladan uzaklaştırıp imha edin.**")
-        report.append(f"2.  **Rüzgarsız bir saatte uygun organik bakırlı ilaç veya sistemik ilaç uygulaması yapın.**")
-        
-    elif has_heavy_rain:
-        report.append(f"💧 **Koruma Önlemleri:**")
-        report.append(f"*   **Sulama:** Kesinlikle sulama sistemlerini kapatın.")
-        report.append(f"*   **Toprak Yönetimi:** Drenaj kanallarını açık tutarak tarlada su göllenmesini engelleyin. Yağış sonrası oluşabilecek azot kaybını (gübre yıkanması) yaprak gübrelemesi ile telafi edeceğiz.")
-        
-        report.append("\n📌 **Aksiyon Planı:**")
-        report.append(f"1.  **Tarladaki drenaj kanallarını kontrol ederek su birikintisi oluşmasını engelleyin.**")
-        report.append(f"2.  **Sulama sistemini tamamen kapatın ve yağış bitene kadar yeni gübreleme yapmayın.**")
-        
+
+        weather_temp = today_weather.get(
+            "temp_c"
+        )
+
+        weather_humidity = today_weather.get(
+            "humidity_pct"
+        )
+
+        weather_condition = today_weather.get(
+            "condition"
+        )
+
+        weather_parts: List[str] = []
+
+        if weather_temp is not None:
+            weather_parts.append(
+                f"sıcaklık "
+                f"{_format_number(weather_temp)}°C"
+            )
+
+        if weather_humidity is not None:
+            weather_parts.append(
+                f"nem "
+                f"%{_format_number(weather_humidity)}"
+            )
+
+        if weather_condition:
+            weather_parts.append(
+                f"durum '{weather_condition}'"
+            )
+
+        if weather_parts:
+            report.append(
+                "*   **Hava Durumu:** Bugün "
+                + ", ".join(weather_parts)
+                + "."
+            )
+
     else:
-        report.append(f"💧 **Sulama ve Besleme Önerisi:**")
-        if soil_moist < m_min:
-            report.append(f"*   Toprak nemi seviyesi düşüktür. Bugün akşam saatlerinde hafif bir sulama yapılması önerilir.")
+        report.append(
+            "*   **Hava Durumu:** "
+            "Tahmin verisi alınamadı."
+        )
+
+    # -----------------------------------------------------
+    # Geçmiş işlem kontrolü
+    # -----------------------------------------------------
+
+    irrigation_found = any(
+        str(item.get("action", "")).lower()
+        == "sulama"
+        for item in history
+        if isinstance(item, dict)
+    )
+
+    if irrigation_found:
+        report.append(
+            "*   **Geçmiş İşlemler:** "
+            "Sulama kaydı bulunuyor. Yeni sulama kararı "
+            "verilirken son işlem zamanı kontrol edilmelidir."
+        )
+
+    report.append("")
+
+    # -----------------------------------------------------
+    # 3. Hastalık tedavisi
+    # -----------------------------------------------------
+
+    if disease_detected and disease_name:
+        report.append(
+            "🧪 **Tedavi ve Önlem Önerileri:**"
+        )
+
+        disease_lower = str(
+            disease_name
+        ).lower()
+
+        if (
+            "mildiyö" in disease_lower
+            or "blight" in disease_lower
+        ):
+            report.append(
+                "*   **Kültürel Önlem:** Hastalıklı yaprakları "
+                "ayırın, tarladan uzaklaştırın ve bitkiler "
+                "arasındaki hava dolaşımını artırın."
+            )
+
+            report.append(
+                "*   **Uygulama:** Mahsul ve hastalık için "
+                "ruhsatlı ürün seçimi konusunda ziraat "
+                "mühendisine danışın."
+            )
+
+        elif (
+            "leke" in disease_lower
+            or "spot" in disease_lower
+            or "virus" in disease_lower
+            or "virüs" in disease_lower
+        ):
+            report.append(
+                "*   **Kültürel Önlem:** Belirti gösteren "
+                "yaprak veya bitkileri ayırın ve olası zararlı "
+                "vektörlerini kontrol edin."
+            )
+
+            report.append(
+                "*   **Uygulama:** Kesin hastalık teşhisi "
+                "yapılmadan kimyasal uygulamaya başlamayın."
+            )
+
         else:
-            report.append(f"*   Toprak nemi yeterlidir. Su tasarrufu sağlamak için sulama yapmaya gerek yoktur.")
-            
-        report.append("\n📌 **Aksiyon Planı:**")
-        if soil_moist < m_min:
-            report.append(f"1.  **Toprak nemini dengede tutmak için akşam rüzgarsız havada sulamayı başlatın.**")
-            report.append(f"2.  **Mahsulün büyüme evresi gereksinimi olan NPK gübrelemesini takip edin.**")
+            report.append(
+                "*   **Kültürel Önlem:** Hastalıklı kısımları "
+                "ayırın ve tarla havalandırmasını iyileştirin."
+            )
+
+            report.append(
+                "*   **Uygulama:** Hastalık doğrulaması ve "
+                "ruhsatlı ürün seçimi için uzman görüşü alın."
+            )
+
+        report.append(
+            "\n📌 **Aksiyon Planı:**"
+        )
+
+        report.append(
+            "1.  **Hastalık belirtisi gösteren yaprakları "
+            "işaretleyin ve yayılım durumunu kontrol edin.**"
+        )
+
+        report.append(
+            "2.  **Kesin teşhis ve uygun uygulama için "
+            "ziraat mühendisine veya yetkili uzmana danışın.**"
+        )
+
+    # -----------------------------------------------------
+    # 4. Şiddetli yağış önlemleri
+    # -----------------------------------------------------
+
+    elif has_heavy_rain:
+        report.append(
+            "💧 **Koruma Önlemleri:**"
+        )
+
+        report.append(
+            "*   **Sulama:** Yağış öncesinde sulama "
+            "sistemini kapatın."
+        )
+
+        report.append(
+            "*   **Toprak Yönetimi:** Drenaj kanallarını "
+            "kontrol ederek su göllenmesini önleyin."
+        )
+
+        report.append(
+            "*   **Gübreleme:** Yoğun yağış öncesinde yeni "
+            "gübreleme yapmayın."
+        )
+
+        report.append(
+            "\n📌 **Aksiyon Planı:**"
+        )
+
+        report.append(
+            "1.  **Tarladaki drenaj kanallarını kontrol edin.**"
+        )
+
+        report.append(
+            "2.  **Sulama sistemini kapatın ve yağış "
+            "tamamlanana kadar gübreleme yapmayın.**"
+        )
+
+    # -----------------------------------------------------
+    # 5. Normal sulama ve besleme önerisi
+    # -----------------------------------------------------
+
+    else:
+        report.append(
+            "💧 **Sulama ve Besleme Önerisi:**"
+        )
+        
+        if irrigation:
+            report.append("")
+            report.append("💧 **Sulama Analizi:**")
+
+            report.append(
+                f"* Günlük su ihtiyacı: "
+                f"{_format_number(irrigation.get('daily_water_need_mm'))} mm"
+            )
+
+            report.append(
+                f"* Metrekare başına su ihtiyacı: "
+                f"{_format_number(irrigation.get('daily_water_need_l_per_m2'))} L"
+           )
+
+            report.append(
+                f"* Tarla alanı: "
+                f"{_format_number(irrigation.get('field_area_m2'))} m²"
+           )
+
+            report.append(
+                f"* Toplam su ihtiyacı: "
+                f"{_format_number(irrigation.get('total_water_need_liters'))} litre"
+           )
+
+            if irrigation.get("irrigation_required"):
+                report.append("* Bugün sulama önerilmektedir.")
+            else:
+                report.append("* Bugün ek sulama önerilmemektedir.")
+
+        if leaching:
+            report.append("")
+            report.append("🧪 **NPK Yıkanma Analizi:**")
+
+            report.append(
+                f"* Azot kaybı: "
+                f"%{_format_number(leaching.get('N_loss_pct'))}"
+            )
+
+            report.append(
+                f"* Fosfor kaybı: "
+                f"%{_format_number(leaching.get('P_loss_pct'))}"
+            )
+
+            report.append(
+                f"* Potasyum kaybı: "
+                f"%{_format_number(leaching.get('K_loss_pct'))}"
+            )
+
+        if soil_moisture is None:
+            report.append(
+                "*   Toprak nemi ölçümü bulunmadığı için "
+                "kesin bir sulama kararı verilemedi. "
+                "Sensör ölçümünü kontrol edin."
+            )
+
+        elif soil_moisture < moisture_min:
+            report.append(
+                "*   Toprak nemi optimum seviyenin altındadır. "
+                "Yağış beklenmiyorsa akşam saatlerinde kontrollü "
+                "sulama yapılması önerilir."
+            )
+
+        elif soil_moisture > moisture_max:
+            report.append(
+                "*   Toprak nemi optimum seviyenin üzerindedir. "
+                "Aşırı sulamadan kaçınılmalıdır."
+            )
+
         else:
-            report.append(f"1.  **Sulama yapmayarak su kaynaklarını koruyun ve toprak havalanmasını sağlayın.**")
-            report.append(f"2.  **Tarladaki bitki gelişimini gözlemlemeye devam edin.**")
-            
+            report.append(
+                "*   Toprak nemi optimum aralıktadır. "
+                "Şu anda ek sulama yapılmasına gerek yoktur."
+            )
+
+        general_notes = crop_db.get(
+            "general_notes"
+        )
+
+        irrigation_notes = crop_db.get(
+            "irrigation_notes"
+        )
+
+        if irrigation_notes:
+            report.append(
+                "*   **Mahsul Sulama Notu:** "
+                f"{irrigation_notes}"
+            )
+
+        if general_notes:
+            report.append(
+                "*   **Mahsul Genel Notu:** "
+                f"{general_notes}"
+            )
+
+        report.append(
+            "\n📌 **Aksiyon Planı:**"
+        )
+
+        if soil_moisture is None:
+            report.append(
+                "1.  **Sensör bağlantısını ve son ölçüm "
+                "zamanını kontrol edin.**"
+            )
+
+            report.append(
+                "2.  **Yeni ölçüm alınmadan sulama miktarı "
+                "hakkında kesin karar vermeyin.**"
+            )
+
+        elif soil_moisture < moisture_min:
+            report.append(
+                "1.  **Yağış tahminini kontrol ederek akşam "
+                "saatlerinde kontrollü sulama yapın.**"
+            )
+
+            report.append(
+                "2.  **Mahsulün gübreleme programını takip edin "
+                "ve gerekirse NPK uygulamasını planlayın.**"
+            )
+
+        elif soil_moisture > moisture_max:
+            report.append(
+                "1.  **Sulamayı durdurun ve toprakta su "
+                "birikmesi olup olmadığını kontrol edin.**"
+            )
+
+            report.append(
+                "2.  **Drenaj ve kök bölgesi havalanmasını "
+                "gözlemleyin.**"
+            )
+
+        else:
+            report.append(
+                "1.  **Mevcut nem seviyesini koruyun ve "
+                "gereksiz sulama yapmayın.**"
+            )
+
+            report.append(
+                "2.  **Bitki gelişimini ve sonraki sensör "
+                "ölçümlerini takip edin.**"
+            )
+
     return "\n".join(report)
