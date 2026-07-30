@@ -107,8 +107,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     
     // Load weather from API (mock or real)
     final weather = await ApiService.instance.getCurrentWeather(
-      _selectedField!['latitude'] ?? 38.4622,
-      _selectedField!['longitude'] ?? 27.0923,
+    _selectedField!['id'].toString(),
     );
 
     // Fetch sensors or use defaults

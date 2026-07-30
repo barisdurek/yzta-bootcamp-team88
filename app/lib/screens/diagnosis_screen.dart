@@ -78,6 +78,27 @@ class _DiagnosisScreenState extends State<DiagnosisScreen> {
       return;
     }
 
+    if (result['error'] == true) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result['message']?.toString() ??
+                  'Tahmin işlemi sırasında bir hata oluştu.',
+            ),
+            backgroundColor: const Color(0xFFB83230),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+
+        setState(() {
+          _apiResult = null;
+        });
+      }
+
+      return;
+    }
+
     if (result['is_confident'] == true) {
       // Save record in local SQLite database
       final diseaseName = result['prediction'];

@@ -68,9 +68,11 @@ class ApiService {
 
   // 2. Current weather API call
   Future<Map<String, dynamic>?> getCurrentWeather(
-      double latitude, double longitude) async {
+    String fieldId,
+  ) async {
     final url = Uri.parse(
-        '$baseUrl/weather/current?latitude=$latitude&longitude=$longitude');
+      '$baseUrl/weather/current/$fieldId',
+    );
     try {
       final response = await http.get(url).timeout(timeoutDuration);
       if (response.statusCode == 200) {
