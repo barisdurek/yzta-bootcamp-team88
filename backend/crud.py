@@ -2,6 +2,7 @@ import uuid
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 
 from models import (
     AIRecommendation,
@@ -9,6 +10,7 @@ from models import (
     Field,
     SensorRecord,
     User,
+    WeatherRecord,
 )
 
 
@@ -232,3 +234,69 @@ def get_recommendations_by_field_id(
         )
         .all()
     )
+
+def create_weather_record(
+    db: Session,
+    field_id: uuid.UUID | str,
+    weather_data: dict,
+):
+    """
+    Filtrelenmiş hava durumu verisini weather_records tablosuna kaydeder.
+    """
+
+    try:
+        field_uuid = (
+            field_id
+            if isinstance(field_id, uuid.UUID)
+            else uuid.UUID(str(field_id))
+        )
+    except (ValueError, TypeError) as exc:
+        raise ValueError(
+            "field_id geçerli bir UUID olmalıdır."
+        ) from exc
+        
+    field = get_field_by_id(
+        db=db,
+        field_id=field_uuid,
+    )
+
+    if field is None:
+        raise ValueError(
+            "Hava durumu kaydı oluşturulamadı. "
+            "Belirtilen field_id için tarla bulunamadı."
+        )
+        
+    timestamp = weather_data.get("timestamp")
+
+    if timestamp is not None:
+        recorded_at = datetime.fromtimestamp(
+            timestamp,
+            tz=timezone.utc,
+        )
+    else:
+        recorded_at = datetime.now(timezone.utc)
+        
+         
+    weather_record = WeatherRecord(
+        field_id=field_uuid,
+        temperature=weather_data.get("temperature_c"),
+        humidity=weather_data.get("humidity_pct"),
+        wind_speed=weather_data.get("wind_speed_ms"),
+        rainfall=weather_data.get("rainfall", 0),
+        api_provider="OpenWeatherMap",
+        recorded_at=recorded_at,
+    )
+    try:
+        db.add(weather_record)
+        db.commit()
+        db.refresh(weather_record)
+
+        return weather_record
+
+    except IntegrityError as exc:
+        db.rollback()
+
+        raise ValueError(
+            "Hava durumu kaydı oluşturulamadı. "
+            "Gönderilen değerleri kontrol edin."
+        ) from exc
