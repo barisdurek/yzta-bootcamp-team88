@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../database/database_helper.dart';
 import '../utils/turkey_cities.dart';
 import 'login_screen.dart';
+import '../services/api_service.dart';
 
 class ProfileSettingsScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -483,7 +484,34 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                       final db = DatabaseHelper.instance;
                       final userId = (_currentUser['id'] ?? _currentUser['user_id'] ?? 1) as int;
 
+                      // Önce backend'de tarlayı oluştur
+                      final backendField = await ApiService.instance.createField({
+                        'user_id': userId.toString(),
+                        'region_id': null,
+                        'field_name': name,
+                        'province': selectedCity ?? 'Konya',
+                        'district': selectedDistrict ?? 'Karatay',
+                        'latitude': 37.87,
+                        'longitude': 32.49,
+                        'area_m2': area,
+                        'soil_type': selectedSoil,
+                        'irrigation_type': 'Damlama',
+                      });
+
+                      // Backend'in döndürdüğü UUID
+                      final backendFieldId =
+                      backendField?['field_id']?.toString() ??
+                      backendField?['id']?.toString();
+
+                      if (backendFieldId == null || backendFieldId.isEmpty) {
+                        throw Exception(
+                          'Backend tarla UUID bilgisi alınamadı.',
+                        );
+                      }
+
+                      // Daha sonra SQLite'a kaydet
                       final fid = await db.insertField({
+                        'backend_field_id': backendFieldId,
                         'name': name,
                         'user_id': userId,
                         'city': selectedCity ?? 'Konya',
