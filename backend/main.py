@@ -14,7 +14,11 @@ from leaching import calculate_npk_leaching
 from central_ai_agent import CentralAIAgent
 from sqlalchemy.orm import Session
 
-from database import get_db, test_database_connection
+from database import (
+    create_database_tables,
+    get_db,
+    test_database_connection,
+)
 from crud import (
     get_all_risk_logs,
     create_risk_log as create_risk_log_db,
@@ -40,6 +44,12 @@ app = FastAPI(
     description="Tarla Gözcüsü projesinin tüm yapay zeka, makine öğrenmesi ve harici API orkestrasyonunu üstlenen merkezi backend servisi.",
     version="1.0.0"
 )
+
+@app.on_event("startup")
+def startup_event():
+    test_database_connection()
+    create_database_tables()
+    print("PostgreSQL bağlantısı başarılı.")
 
 # CORS
 app.add_middleware(
@@ -231,10 +241,7 @@ def do_leaching_calc(req: LeachingRequest):
     val = calculate_npk_leaching(req.precipitation_mm, req.net_irrigation_mm, req.soil_type)
     return val
 
-@app.post(
-    "/ai/recommend",
-    summary="Merkezi AI Agent ile öneri üretir ve veritabanına kaydeder",
-)
+@app.post("/ai/recommend", summary="Merkezi AI Agent ile öneri üretir ve veritabanına kaydeder",)
 def get_ai_recommendation(
     request: AIRecommendationRequest,
     db: Session = Depends(get_db),
