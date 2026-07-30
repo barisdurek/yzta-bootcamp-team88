@@ -8,7 +8,7 @@ Ekip 88
 
 - Aycan Kurt: Scrum Master
 - Barış Dürek: Product Owner
-- Zahid Nabi Çelik: Ekip Üyesi
+- Zahid Nabi Çelik: Proje Yöneticisi/Ekip Üyesi
 
 ## Ürün İsmi
 
