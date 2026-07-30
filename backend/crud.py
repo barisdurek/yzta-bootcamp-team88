@@ -76,7 +76,32 @@ def get_field_by_id(
 
 
 def create_field(db: Session, data: dict):
-    field = Field(**data)
+    user_id = data.get("user_id")
+
+    try:
+        user_uuid = uuid.UUID(str(user_id))
+
+    except (ValueError, TypeError):
+        # TODO:
+        # Geçici çözüm.
+        # Flutter yerel SQLite kullanıcı ID'si gönderdiği için
+        # backend veritabanındaki ilk kullanıcı kullanılıyor.
+        first_user = db.query(User).first()
+
+        if first_user is None:
+            raise ValueError(
+                "Tarla oluşturmak için backend veritabanında "
+                "en az bir kullanıcı bulunmalıdır."
+            )
+
+        user_uuid = first_user.id
+
+    field_data = {
+        **data,
+        "user_id": user_uuid,
+    }
+
+    field = Field(**field_data)
 
     try:
         db.add(field)
@@ -184,6 +209,8 @@ def create_ai_recommendation(
 
     except IntegrityError as exc:
         db.rollback()
+
+        print("CREATE AI RECOMMENDATION ERROR:", repr(exc))
 
         raise ValueError(
             "AI önerisi kaydedilemedi. field_id, recommendation_type "

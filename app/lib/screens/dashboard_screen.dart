@@ -82,8 +82,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
     
     // Load crop details
     final crop = await DatabaseHelper.instance.getActiveCropForField(_selectedField!['id']);
-    // Load latest recommendation
-    final rec = await DatabaseHelper.instance.getLatestRecommendation(_selectedField!['id']);
+    // Load latest recommendation from backend API
+    Map<String, dynamic>? rec;
+
+    final backendFieldId =
+        _selectedField?['backend_field_id']?.toString();
+
+    if (backendFieldId != null && backendFieldId.isNotEmpty) {
+      final response =
+          await ApiService.instance.getAIRecommendationsByFieldId(
+        backendFieldId,
+      );
+
+      if (response != null) {
+        final recommendations = response['recommendations'];
+
+        if (recommendations is List && recommendations.isNotEmpty) {
+          rec = Map<String, dynamic>.from(
+            recommendations.first,
+          );
+        }
+      }    
+    }
     
     // Load weather from API (mock or real)
     final weather = await ApiService.instance.getCurrentWeather(
@@ -107,11 +127,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _latestRecommendation = rec;
       _currentWeather = weather;
     });
-
-    // If there's no recommendation, let's trigger an automatic one to show the bento card
-    if (_latestRecommendation == null) {
-      await _triggerAIRecommendation();
-    }
   }
 
   Future<void> _triggerAIRecommendation() async {
@@ -323,17 +338,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         final db = DatabaseHelper.instance;
                         final userId = (widget.user['id'] ?? widget.user['user_id'] ?? 1) as int;
 
-                        final fid = await db.insertField({
-                          'name': name,
-                          'user_id': userId,
-                          'city': selectedCity ?? 'Konya',
+                        // Önce tarlayı backend veritabanında oluştur.
+                        final backendField = await ApiService.instance.createField({
+                          'user_id': userId.toString(),
+                          'region_id': null,
+                          'field_name': name,
+                          'province': selectedCity ?? 'Konya',
                           'district': selectedDistrict ?? 'Karatay',
-                          'area': area,
-                          'soil_type': selectedSoilType,
-                          'irrigation_type': 'Damlama',
                           'latitude': 37.87,
                           'longitude': 32.49,
+                          'area_m2': area,
+                          'soil_type': selectedSoilType,
+                          'irrigation_type': 'Damlama',
                         });
+
+                        // Backend'in döndürdüğü UUID'yi al.
+                        final backendFieldId =
+                          backendField?['field_id']?.toString() ??
+                          backendField?['id']?.toString();
+
+                          if (backendFieldId == null || backendFieldId.isEmpty) {
+                            throw Exception(
+                              'Tarla backend üzerinde oluşturulamadı veya tarla UUID bilgisi alınamadı.',
+                            );
+                          }
+
+                        // Backend UUID'siyle birlikte yerel SQLite'a kaydet.
+                        final fid = await db.insertField({
+  'backend_field_id': backendFieldId,
+  'name': name,
+  'user_id': userId,
+  'city': selectedCity ?? 'Konya',
+  'district': selectedDistrict ?? 'Karatay',
+  'area': area,
+  'soil_type': selectedSoilType,
+  'irrigation_type': 'Damlama',
+  'latitude': 37.87,
+  'longitude': 32.49,
+});
 
                         await db.insertFieldCrop({
                           'field_id': fid,

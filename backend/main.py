@@ -446,11 +446,12 @@ def create_field(
 
     except Exception as e:
         db.rollback()
+        print("CREATE FIELD ERROR:", repr(e))
 
         raise HTTPException(
             status_code=500,
             detail=f"Tarla oluşturulamadı: {e}",
-        )
+        )from e
 
 @app.post(
     "/sensor-records",

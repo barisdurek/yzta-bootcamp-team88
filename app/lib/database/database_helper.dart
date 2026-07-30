@@ -28,9 +28,14 @@ class DatabaseHelper {
     try {
       await db.execute('ALTER TABLE users ADD COLUMN image_path TEXT;');
     } catch (_) {}
+    try {
+      await db.execute(
+        'ALTER TABLE fields ADD COLUMN backend_field_id TEXT;',
+      );
+    } catch (_) {}
 
-    return db;
-  }
+        return db;
+      }
 
   Future<void> _createDB(Database db, int version) async {
     const textType = 'TEXT';
@@ -68,6 +73,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE fields (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        backend_field_id $textType,
         name $textType NOT NULL,
         user_id $integerType NOT NULL,
         region_climate_id $integerType,
@@ -322,6 +328,7 @@ class DatabaseHelper {
     try {
       final db = await instance.database;
       final Map<String, dynamic> cleanField = {
+        'backend_field_id': field['backend_field_id'],
         'name': field['name'] ?? field['field_name'] ?? 'İsimsiz Tarla',
         'user_id': field['user_id'] ?? 1,
         'city': field['city'] ?? field['province'] ?? 'Konya',
