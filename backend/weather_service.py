@@ -59,6 +59,7 @@ def filter_weather_data(raw_data: dict[str, Any]) -> dict[str, Any]:
     main_data = raw_data.get("main", {})
     wind_data = raw_data.get("wind", {})
     coord_data = raw_data.get("coord", {})
+    rain_data = raw_data.get("rain", {})
     weather_list = raw_data.get("weather", [{}])
 
     wind_speed_ms = wind_data.get("speed", 0.0)

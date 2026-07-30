@@ -22,6 +22,8 @@ from crud import (
     get_user_by_email,
     create_field as create_field_db,
     get_all_fields,
+    get_field_by_id,
+    create_weather_record,
     create_ai_recommendation,
     get_recommendations_by_field_id,
     create_sensor_record as create_sensor_record_db,
@@ -149,17 +151,60 @@ async def predict(
             detail=f"Error running inference: {e}"
         )
 
-@app.get("/weather/current", summary="Koordinata göre güncel hava durumunu döner")
-def get_current_weather(latitude: float, longitude: float):
+@app.get(
+    "/weather/current/{field_id}",
+    summary="Tarlaya göre güncel hava durumunu döner",
+)
+def get_current_weather(
+    field_id: str,
+    db: Session = Depends(get_db),
+):
     try:
-        raw_data = get_weather_by_coordinates(latitude, longitude)
-        return filter_weather_data(raw_data)
+        
+        try:
+            field_uuid = uuid.UUID(field_id)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="field_id geçerli bir UUID olmalıdır.",
+            ) from exc
+            
+        field = get_field_by_id(
+            db=db,
+            field_id=field_uuid,
+      )
+
+        if field is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Tarla bulunamadı.",
+            )
+        
+        raw_data = get_weather_by_coordinates(
+            field.latitude,
+            field.longitude,
+        )
+        weather_data = filter_weather_data(raw_data)
+
+        created_weather_record = create_weather_record(
+            db=db,
+            field_id=field_uuid,
+            weather_data=weather_data,
+        )
+
+        print(
+            "WEATHER RECORD CREATED:",
+            created_weather_record.id,
+        )
+
+        return weather_data
+    
     except Exception as e:
         # Fallback to simulated current weather
         import random
         return {
-            "latitude": latitude,
-            "longitude": longitude,
+            "latitude": field.latitude,
+            "longitude": field.longitude,
             "temperature_c": round(25.0 + random.uniform(-4, 4), 1),
             "humidity_pct": random.randint(45, 75),
             "wind_speed_ms": 3.2,

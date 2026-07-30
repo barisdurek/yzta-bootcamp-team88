@@ -259,3 +259,51 @@ class AIRecommendation(Base):
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP"),
     )
+    
+class WeatherRecord(Base):
+    __tablename__ = "weather_records"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
+    )
+
+    field_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("fields.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    temperature: Mapped[Decimal | None] = mapped_column(
+        Numeric,
+        nullable=True,
+    )
+
+    humidity: Mapped[Decimal | None] = mapped_column(
+        Numeric,
+        nullable=True,
+    )
+
+    wind_speed: Mapped[Decimal | None] = mapped_column(
+        Numeric,
+        nullable=True,
+    )
+
+    rainfall: Mapped[Decimal] = mapped_column(
+        Numeric,
+        nullable=False,
+        server_default=text("0"),
+    )
+
+    api_provider: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+        server_default=text("'OpenWeatherMap'"),
+    )
+
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("CURRENT_TIMESTAMP"),
+    )
