@@ -144,8 +144,7 @@ class _TerraChatScreenState extends State<TerraChatScreen> with AutomaticKeepAli
 
     // Fetch weather details for selected field
     final weather = await ApiService.instance.getCurrentWeather(
-      activeField['latitude'] ?? 38.4622,
-      activeField['longitude'] ?? 27.0923,
+    activeField['id'].toString(),
     );
 
     final inputJson = {
