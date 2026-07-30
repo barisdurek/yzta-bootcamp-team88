@@ -42,9 +42,9 @@ Tarla Gözcüsü
 Story'ler yapılacak işlere sub-task'lara bölünmüştür. Sprint'ler tamamlandıkça yeni sprintin backloguna geçilir. 
 ---
 **Board Düzeni**: 
-- Turuncu Simge: Zahid Nabi Çelik
 - Mavi Simge: Aycan Kurt
 - Mor Simge: Barış Dürek
+- Turuncu Simge: Zahid Nabi Çelik
 
 <details>
 <summary> <h2>Sprint 1</h2> </summary>
