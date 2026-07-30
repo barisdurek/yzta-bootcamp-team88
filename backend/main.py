@@ -203,8 +203,8 @@ def get_current_weather(
         # Fallback to simulated current weather
         import random
         return {
-            "latitude": field.latitude,
-            "longitude": field.longitude,
+            "latitude": getattr(locals().get("field"), "latitude", 37.8667),
+            "longitude": getattr(locals().get("field"), "longitude", 32.4833), 
             "temperature_c": round(25.0 + random.uniform(-4, 4), 1),
             "humidity_pct": random.randint(45, 75),
             "wind_speed_ms": 3.2,
