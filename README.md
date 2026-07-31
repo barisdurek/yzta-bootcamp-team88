@@ -132,7 +132,8 @@ Story'ler yapılacak işlere sub-task'lara bölünmüştür. Sprint'ler tamamlan
 - <img width="2561" height="8884" alt="Sprint 3 Board 1" src="https://github.com/user-attachments/assets/228e58cb-a628-4fac-8903-e2b6f780feab" />
 - <img width="2561" height="8602" alt="Sprint 3 Board 2" src="https://github.com/user-attachments/assets/773273f3-52af-4184-bac1-6aa511c036e5" />
 - <img width="2561" height="9184" alt="Sprint 3 Board 3" src="https://github.com/user-attachments/assets/959d8c71-d659-4c70-9154-5dfcd0453d6e" />
-- 
+- <img width="2561" height="9705" alt="Sprint 3 Board 4" src="https://github.com/user-attachments/assets/8887c976-a326-40bc-85b9-4176df40a7ff" />
+
 
  
 - **Ürün Durumu**:
