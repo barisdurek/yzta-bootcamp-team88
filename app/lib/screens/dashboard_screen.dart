@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../database/database_helper.dart';
@@ -34,6 +33,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   bool _isLoading = false;
 
+  int get _localUserId {
+    final rawId = widget.user['id'] ?? widget.user['user_id'] ?? 1;
+
+    if (rawId is int) {
+      return rawId;
+    }
+
+    return int.tryParse(rawId.toString()) ?? 1;
+  }
+
+  String? _getBackendFieldId(Map<String, dynamic>? field) {
+    final rawId = field?['backend_field_id'];
+    if (rawId == null) {
+      return null;
+    }
+
+    final value = rawId.toString().trim();
+    if (value.isEmpty || value.toLowerCase() == 'null') {
+      return null;
+    }
+
+    return value;
+  }
+
+  String _backendUserReference() {
+    final rawId = widget.user['backend_user_id'] ??
+        widget.user['backend_id'] ??
+        widget.user['uuid'] ??
+        widget.user['id'] ??
+        widget.user['user_id'] ??
+        _localUserId;
+
+    return rawId.toString();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -41,159 +75,266 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadFields([int? selectFieldId]) async {
-    setState(() => _isLoading = true);
-    final userId = (widget.user['id'] ?? widget.user['user_id'] ?? 1) as int;
-    final fields = await DatabaseHelper.instance.getFieldsForUser(userId);
-
-    Map<String, dynamic>? nextSelected;
-    if (fields.isNotEmpty) {
-      if (selectFieldId != null) {
-        nextSelected = fields.firstWhere(
-          (f) => f['id'] == selectFieldId,
-          orElse: () => fields.last,
-        );
-      } else if (_selectedField != null) {
-        final existingId = _selectedField!['id'];
-        nextSelected = fields.firstWhere(
-          (f) => f['id'] == existingId,
-          orElse: () => fields.first,
-        );
-      } else {
-        nextSelected = fields.first;
-      }
+    if (mounted) {
+      setState(() => _isLoading = true);
     }
 
-    setState(() {
-      _fields = fields;
-      _selectedField = nextSelected;
-      if (nextSelected == null) {
-        _activeCrop = null;
-      }
-      _isLoading = false;
-    });
+    try {
+      final fields =
+          await DatabaseHelper.instance.getFieldsForUser(_localUserId);
 
-    if (_selectedField != null) {
-      await _loadFieldDetails();
+      Map<String, dynamic>? nextSelected;
+
+      if (fields.isNotEmpty) {
+        if (selectFieldId != null) {
+          nextSelected = fields.firstWhere(
+            (field) => field['id'] == selectFieldId,
+            orElse: () => fields.last,
+          );
+        } else if (_selectedField != null) {
+          final existingId = _selectedField!['id'];
+
+          nextSelected = fields.firstWhere(
+            (field) => field['id'] == existingId,
+            orElse: () => fields.first,
+          );
+        } else {
+          nextSelected = fields.first;
+        }
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _fields = fields;
+        _selectedField = nextSelected;
+
+        if (nextSelected == null) {
+          _activeCrop = null;
+          _currentWeather = null;
+          _latestRecommendation = null;
+        }
+      });
+
+      if (nextSelected != null) {
+        await _loadFieldDetails();
+      }
+    } catch (error, stackTrace) {
+      debugPrint('Load fields error: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tarlalar yüklenirken bir hata oluştu.'),
+            backgroundColor: Color(0xFFB83230),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _loadFieldDetails() async {
-    if (_selectedField == null) return;
-    
-    // Load crop details
-    final crop = await DatabaseHelper.instance.getActiveCropForField(_selectedField!['id']);
-    // Load latest recommendation from backend API
-    Map<String, dynamic>? rec;
+    final selectedField = _selectedField;
+    if (selectedField == null) {
+      return;
+    }
 
-    final backendFieldId =
-        _selectedField?['backend_field_id']?.toString();
+    try {
+      final localFieldId = selectedField['id'] as int;
+      final backendFieldId = _getBackendFieldId(selectedField);
 
-    if (backendFieldId != null && backendFieldId.isNotEmpty) {
-      final response =
-          await ApiService.instance.getAIRecommendationsByFieldId(
-        backendFieldId,
+      final crop = await DatabaseHelper.instance.getActiveCropForField(
+        localFieldId,
       );
 
-      if (response != null) {
-        final recommendations = response['recommendations'];
+      Map<String, dynamic>? recommendation;
+      Map<String, dynamic>? weather;
 
-        if (recommendations is List && recommendations.isNotEmpty) {
-          rec = Map<String, dynamic>.from(
-            recommendations.first,
-          );
+      if (backendFieldId != null) {
+        final recommendationResponse =
+            await ApiService.instance.getAIRecommendationsByFieldId(
+          backendFieldId,
+        );
+
+        if (recommendationResponse != null &&
+            recommendationResponse['error'] != true) {
+          final recommendations =
+              recommendationResponse['recommendations'];
+
+          if (recommendations is List && recommendations.isNotEmpty) {
+            recommendation = Map<String, dynamic>.from(
+              recommendations.first as Map,
+            );
+          }
         }
-      }    
-    }
-    
-    // Load weather from API (mock or real)
-    final weather = await ApiService.instance.getCurrentWeather(
-    _selectedField!['id'].toString(),
-    );
 
-    // Fetch sensors or use defaults
-    final sensors = await DatabaseHelper.instance.getSensorsForField(_selectedField!['id']);
-    if (sensors.isNotEmpty) {
-      _soilMoisture = (sensors.first['soil_moisture_pct'] as num).toDouble();
-      _soilTemp = (sensors.first['soil_temp_c'] as num).toDouble();
-    } else {
-      // Seed default random values for demo
-      _soilMoisture = 52.0;
-      _soilTemp = 23.0;
-    }
+        weather = await ApiService.instance.getCurrentWeather(
+          backendFieldId,
+        );
+      } else {
+        debugPrint(
+          'Selected local field has no backend_field_id: $selectedField',
+        );
+      }
 
-    setState(() {
-      _activeCrop = crop;
-      _latestRecommendation = rec;
-      _currentWeather = weather;
-    });
+      final sensors =
+          await DatabaseHelper.instance.getSensorsForField(localFieldId);
+
+      double soilMoisture = 52.0;
+      double soilTemperature = 23.0;
+
+      if (sensors.isNotEmpty) {
+        soilMoisture =
+            (sensors.first['soil_moisture_pct'] as num?)?.toDouble() ??
+                soilMoisture;
+        soilTemperature =
+            (sensors.first['soil_temp_c'] as num?)?.toDouble() ??
+                soilTemperature;
+      }
+
+      if (!mounted || _selectedField?['id'] != localFieldId) {
+        return;
+      }
+
+      setState(() {
+        _activeCrop = crop;
+        _latestRecommendation = recommendation;
+        _currentWeather = weather;
+        _soilMoisture = soilMoisture;
+        _soilTemp = soilTemperature;
+      });
+    } catch (error, stackTrace) {
+      debugPrint('Load field details error: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
   }
 
   Future<void> _triggerAIRecommendation() async {
-    if (_selectedField == null || _activeCrop == null) return;
+    final selectedField = _selectedField;
+    final activeCrop = _activeCrop;
 
-    // Create the exact Input JSON Schema needed by the AI Agent
-    final inputJson = {
-      "current_time": DateTime.now().toIso8601String(),
-      "user_info": {
-        "name": widget.user['name'],
-        "location": "${_selectedField!['city']} / ${_selectedField!['district']}"
-      },
-      "field_info": {
-        "field_name": _selectedField!['name'],
-        "crop_name": _activeCrop!['name'],
-        "growth_stage": _activeCrop!['growth_stage'] ?? "Meyve Gelişimi"
-      },
-      "crop_db_info": {
-        "optimum_temp_range": _activeCrop!['optimum_temp_range'],
-        "optimum_moisture_range_pct": _activeCrop!['optimum_moisture_range_pct'],
-        "suggested_npk": _activeCrop!['suggested_npk'],
-        "water_need": _activeCrop!['water_need']
-      },
-      "farmer_history": [
-        {
-          "action": "sulama",
-          "date": DateTime.now().subtract(const Duration(hours: 48)).toIso8601String(),
-          "details": "Damla sulama yapıldı"
-        }
-      ],
-      "sensor_records": {
-        "soil_moisture_pct": _soilMoisture,
-        "soil_temp_c": _soilTemp
-      },
-      "weather_forecast": [
-        {
-          "date": DateTime.now().strftime("%Y-%m-%d"),
-          "temp_c": _currentWeather != null ? _currentWeather!['temperature_c'] : 28.0,
-          "humidity_pct": _currentWeather != null ? _currentWeather!['humidity_pct'] : 55,
-          "precipitation_mm": 0.0,
-          "condition": _currentWeather != null ? _currentWeather!['weather_description'] : "Açık"
-        },
-        {
-          "date": DateTime.now().add(const Duration(days: 1)).strftime("%Y-%m-%d"),
-          "temp_c": 29.0,
-          "humidity_pct": 50,
-          "precipitation_mm": 0.0,
-          "condition": "Açık"
-        }
-      ],
-      "cnn_disease_result": {
-        "detected": false,
-        "disease_name": null,
-        "confidence_pct": 0
+    if (selectedField == null || activeCrop == null) {
+      return;
+    }
+
+    final backendFieldId = _getBackendFieldId(selectedField);
+
+    if (backendFieldId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Bu tarla canlı backend ile eşleştirilmemiş. '
+              'Tarlayı yeniden oluşturup tekrar deneyin.',
+            ),
+            backgroundColor: Color(0xFFB83230),
+          ),
+        );
       }
+      return;
+    }
+
+    final today = DateTime.now();
+    final tomorrow = today.add(const Duration(days: 1));
+
+    final inputJson = <String, dynamic>{
+      'field_id': backendFieldId,
+      'recommendation_type': 'general',
+      'risk_level': null,
+      'source_data': <String, dynamic>{
+        'current_time': today.toIso8601String(),
+        'user_info': {
+          'name': widget.user['name'] ??
+              widget.user['full_name'] ??
+              'Çiftçi',
+          'location':
+              '${selectedField['city']} / ${selectedField['district']}',
+        },
+        'field_info': {
+          'field_name':
+              selectedField['name'] ?? selectedField['field_name'],
+          'crop_name': activeCrop['name'] ?? 'Bilinmeyen Ürün',
+          'growth_stage':
+              activeCrop['growth_stage'] ?? 'Meyve Gelişimi',
+        },
+        'crop_db_info': {
+          'optimum_temp_range':
+              activeCrop['optimum_temp_range'] ?? '20-30 C',
+          'optimum_moisture_range_pct':
+              activeCrop['optimum_moisture_range_pct'] ?? '50-70 %',
+          'suggested_npk':
+              activeCrop['suggested_npk'] ?? '15-15-15',
+          'water_need': activeCrop['water_need'] ?? 'Orta',
+        },
+        'farmer_history': [
+          {
+            'action': 'sulama',
+            'date': today
+                .subtract(const Duration(hours: 48))
+                .toIso8601String(),
+            'details': 'Damla sulama yapıldı',
+          },
+        ],
+        'sensor_records': {
+          'soil_moisture_pct': _soilMoisture,
+          'soil_temp_c': _soilTemp,
+        },
+        'weather_forecast': [
+          {
+            'date': today.toIso8601String().split('T')[0],
+            'temp_c': _currentWeather?['temperature_c'] ?? 28.0,
+            'humidity_pct': _currentWeather?['humidity_pct'] ?? 55,
+            'precipitation_mm': _currentWeather?['rainfall'] ?? 0.0,
+            'condition':
+                _currentWeather?['weather_description'] ?? 'Açık',
+          },
+          {
+            'date': tomorrow.toIso8601String().split('T')[0],
+            'temp_c': 29.0,
+            'humidity_pct': 50,
+            'precipitation_mm': 0.0,
+            'condition': 'Açık',
+          },
+        ],
+        'cnn_disease_result': {
+          'detected': false,
+          'disease_name': null,
+          'confidence_pct': 0,
+        },
+      },
     };
 
-    final result = await ApiService.instance.getAIRecommendation(inputJson);
-    if (result != null) {
-      final recMap = {
-        'field_id': _selectedField!['id'],
-        'recommendation_type': 'Proaktif Tavsiye',
-        'recommendation_text': result,
-        'created_at': DateTime.now().toIso8601String(),
-      };
-      await DatabaseHelper.instance.insertAIRecommendation(recMap);
+    debugPrint('AI REQUEST FIELD ID: $backendFieldId');
+
+    final result =
+        await ApiService.instance.getAIRecommendation(inputJson);
+
+    if (result == null || !mounted) {
+      return;
+    }
+
+    final localFieldId = selectedField['id'] as int;
+    final recommendation = <String, dynamic>{
+      'field_id': localFieldId,
+      'recommendation_type': 'Proaktif Tavsiye',
+      'recommendation_text': result,
+      'created_at': DateTime.now().toIso8601String(),
+    };
+
+    await DatabaseHelper.instance.insertAIRecommendation(
+      recommendation,
+    );
+
+    if (mounted && _selectedField?['id'] == localFieldId) {
       setState(() {
-        _latestRecommendation = recMap;
+        _latestRecommendation = recommendation;
       });
     }
   }
@@ -335,60 +476,79 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                       try {
                         final db = DatabaseHelper.instance;
-                        final userId = (widget.user['id'] ?? widget.user['user_id'] ?? 1) as int;
+                        final userId = _localUserId;
 
-                        // Önce tarlayı backend veritabanında oluştur.
-                        final backendField = await ApiService.instance.createField({
-                          'user_id': userId.toString(),
-                          'region_id': null,
-                          'field_name': name,
-                          'province': selectedCity ?? 'Konya',
-                          'district': selectedDistrict ?? 'Karatay',
-                          'latitude': 37.87,
-                          'longitude': 32.49,
-                          'area_m2': area,
-                          'soil_type': selectedSoilType,
-                          'irrigation_type': 'Damlama',
-                        });
-
-                        // Backend'in döndürdüğü UUID'yi al.
-                        final backendFieldId =
-                          backendField?['field_id']?.toString() ??
-                          backendField?['id']?.toString();
-
-                          if (backendFieldId == null || backendFieldId.isEmpty) {
-                            throw Exception(
-                              'Tarla backend üzerinde oluşturulamadı veya tarla UUID bilgisi alınamadı.',
-                            );
-                          }
-
-                        // Backend UUID'siyle birlikte yerel SQLite'a kaydet.
-                        final fid = await db.insertField({
-  'backend_field_id': backendFieldId,
-  'name': name,
-  'user_id': userId,
-  'city': selectedCity ?? 'Konya',
-  'district': selectedDistrict ?? 'Karatay',
-  'area': area,
-  'soil_type': selectedSoilType,
-  'irrigation_type': 'Damlama',
-  'latitude': 37.87,
-  'longitude': 32.49,
-});
-
-                        await db.insertFieldCrop({
-                          'field_id': fid,
-                          'crop_id': selectedCropId,
-                          'planting_date': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
-                          'growth_stage': 'Vejetatif',
-                          'is_active': 1,
-                        });
-
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Yeni tarla başarıyla eklendi: $name'), backgroundColor: const Color(0xFF4A7C59)),
+                        final backendField =
+                            await ApiService.instance.createField(
+                          {
+                            'user_id': _backendUserReference(),
+                            'region_id': null,
+                            'field_name': name,
+                            'province': selectedCity ?? 'Konya',
+                            'district': selectedDistrict ?? 'Karatay',
+                            'latitude': 37.87,
+                            'longitude': 32.49,
+                            'area_m2': area,
+                            'soil_type': selectedSoilType,
+                            'irrigation_type': 'Damlama',
+                          },
                         );
-                        await _loadFields(fid);
+
+                        final backendFieldId =
+                            backendField?['field_id']?.toString() ??
+                                backendField?['id']?.toString();
+
+                        if (backendFieldId == null ||
+                            backendFieldId.trim().isEmpty) {
+                          throw Exception(
+                            'Tarla backend üzerinde oluşturulamadı '
+                            'veya tarla UUID bilgisi alınamadı.',
+                          );
+                        }
+
+                        final localFieldId = await db.insertField(
+                          {
+                            'backend_field_id': backendFieldId,
+                            'name': name,
+                            'user_id': userId,
+                            'city': selectedCity ?? 'Konya',
+                            'district': selectedDistrict ?? 'Karatay',
+                            'area': area,
+                            'soil_type': selectedSoilType,
+                            'irrigation_type': 'Damlama',
+                            'latitude': 37.87,
+                            'longitude': 32.49,
+                          },
+                        );
+
+                        await db.insertFieldCrop(
+                          {
+                            'field_id': localFieldId,
+                            'crop_id': selectedCropId,
+                            'planting_date': DateTime.now()
+                                .subtract(const Duration(days: 30))
+                                .toIso8601String(),
+                            'growth_stage': 'Vejetatif',
+                            'is_active': 1,
+                          },
+                        );
+
+                        if (!mounted) {
+                          return;
+                        }
+
+                        Navigator.of(context).pop();
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Yeni tarla başarıyla eklendi: $name',
+                            ),
+                            backgroundColor: const Color(0xFF4A7C59),
+                          ),
+                        );
+
+                        await _loadFields(localFieldId);
                       } catch (e) {
                         print("Add field error: $e");
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -929,16 +1089,3 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// Extension to format DateTime to string matching format in python
-extension DateFormatting on DateTime {
-  String strftime(String format) {
-    if (format == "%Y-%m-%d") {
-      return "${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}";
-    }
-    return toIso8601String();
-  }
-  
-  String toIso8601StringDate() {
-    return toIso8601String().split('T')[0];
-  }
-}

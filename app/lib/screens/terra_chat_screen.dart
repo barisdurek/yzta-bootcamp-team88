@@ -148,6 +148,11 @@ class _TerraChatScreenState extends State<TerraChatScreen> with AutomaticKeepAli
     );
 
     final inputJson = {
+      "field_id": activeField["backend_field_id"]?.toString(),
+        "recommendation_type": "general",
+        "risk_level": null,
+        "source_data": {
+
       "current_time": DateTime.now().toIso8601String(),
       "user_info": {
         "name": widget.user['name'],
@@ -184,12 +189,13 @@ class _TerraChatScreenState extends State<TerraChatScreen> with AutomaticKeepAli
           "condition": weather != null ? weather['weather_description'] : "Açık"
         }
       ],
-      "cnn_disease_result": {
-        "detected": false,
-        "disease_name": null,
-        "confidence_pct": 0
-      }
-    };
+            "cnn_disease_result": {
+             "detected": false,
+             "disease_name": null,
+             "confidence_pct": 0
+           }
+         }
+       };
 
     final result = await ApiService.instance.getAIRecommendation(inputJson);
 
