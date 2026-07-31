@@ -24,7 +24,7 @@ Tarla Gözcüsü
 - Dinamik Sulama ve Su Optimizasyonu: Mahsulün kök derinliği, büyüme evresi ve hava durumu API'larından gelen anlık/tarihsel verileri birleştirerek gereksiz su tüketimini engeller.
 - Besin Takibi ve Gübre Yıkanma Simülasyonu: Yağış ve sulama verileri üzerinden topraktaki NPK (azot, fosfor, potasyum) kaybını analitik modellerle hesaplayarak optimum gübreleme tavsiyeleri verir.
 - Hastalık Erken Uyarı ve Teşhis: Erken evre bitki besin stresi ve hastalık tespiti için evrişimli sinir ağlarının (CNN) karşılaştırmalı analizini kullanan, mobil kamera entegreli genişletilebilir görüntü işleme boru hattı.
-- Merkezi AI Ajanı (Orkestratör): Harici iklim verilerini, makine öğrenmesi tahminlerini ve görsel analiz çıktılarını birleştirerek kullanıcıya doğal dilde net aksiyon planları sunar.
+- Merkezi AI Ajanı (Terra AI): Harici iklim verilerini, makine öğrenmesi tahminlerini ve görsel analiz çıktılarını birleştirerek kullanıcıya doğal dilde net aksiyon planları sunar.
 
 ## Hedef Kitle
 
