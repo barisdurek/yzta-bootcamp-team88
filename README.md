@@ -32,7 +32,7 @@ Tarla Gözcüsü
 - Hobi amaçlı tarıma yönelen, veri odaklı karar almayı tercih eden her yaştan telefon sahibi kullanıcılar
 - Teknolojik tarım asistanlarına entegre olmaya açık tüm tarım sektörü paydaşları
 ## Ürün YouTube Videosu URL
-- 
+- https://www.youtube.com/watch?v=k93X4KxN5To
 ## Work (Epic) LIST URL
 - Jira List URL: https://zahidnabicelik.atlassian.net/jira/software/projects/E88/list?jql=project%20%3D%20E88%20ORDER%20BY%20cf%5B10019%5D%20ASC
 ## Sprints Timeline URL
