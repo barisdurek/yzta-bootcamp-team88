@@ -7,7 +7,7 @@ class ApiService {
   static final ApiService instance = ApiService._init();
 
   // Default emulator IP targeting host machine localhost
-  String baseUrl = 'http://10.0.2.2:8000';
+  String baseUrl = 'https://tarla-gozcusu-backend.onrender.com';
   static const Duration timeoutDuration = Duration(seconds: 15);
   static const Duration aiTimeoutDuration = Duration(seconds: 45);
 
@@ -83,8 +83,8 @@ class ApiService {
       print('Current weather connection/timeout error: $e');
       // Return safe local fallback structure so UI doesn't break
       return {
-        "latitude": latitude,
-        "longitude": longitude,
+        "latitude":null,
+        "longitude":null,
         "temperature_c": 24.5,
         "humidity_pct": 55,
         "wind_speed_ms": 3.0,
@@ -199,6 +199,7 @@ class ApiService {
   // 6. Gemini AI Agent recommendations
   Future<String?> getAIRecommendation(Map<String, dynamic> tarlaData) async {
     final url = Uri.parse('$baseUrl/ai/recommend');
+    print('AI REQUEST URL: $url');
     try {
       final response = await http
           .post(
@@ -219,6 +220,7 @@ class ApiService {
       }
 
       print('AI Agent http status: ${response.statusCode}');
+      print('AI Agent response body: ${utf8.decode(response.bodyBytes)}');
       return 'Sunucudan yanıt alınamadı (HTTP ${response.statusCode}). Lütfen bağlantınızı kontrol edip tekrar deneyin.';
     } on SocketException {
       print('AI Agent: SocketException (No Internet or Server Down)');
@@ -284,26 +286,33 @@ Future<Map<String, dynamic>?> createField(
         )
         .timeout(timeoutDuration);
 
+    final responseBody = utf8.decode(response.bodyBytes);
+
+    print('CREATE FIELD STATUS: ${response.statusCode}');
+    print('CREATE FIELD BODY: $responseBody');
+
     if (response.statusCode == 200 ||
         response.statusCode == 201) {
-      final decoded = jsonDecode(
-        utf8.decode(response.bodyBytes),
-      );
+      final decoded = jsonDecode(responseBody);
 
       if (decoded is Map<String, dynamic>) {
         final createdField = decoded['field'];
 
+        // Backend {"field": {...}} döndürüyorsa
         if (createdField is Map) {
-          return Map<String, dynamic>.from(
-            createdField,
-          );
+          return Map<String, dynamic>.from(createdField);
+        }
+
+        // Backend tarlayı doğrudan {...} olarak döndürüyorsa
+        if (decoded['id'] != null) {
+          return decoded;
         }
       }
     }
 
     print(
       'Create field failed: '
-      '${response.statusCode}, ${response.body}',
+      '${response.statusCode}, $responseBody',
     );
 
     return null;
