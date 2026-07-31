@@ -12,7 +12,7 @@ Ekip 88
 
 ## Ürün İsmi
 
-Tarla Gözcüsü
+**Tarla Gözcüsü**
 <img width="1123" height="264" alt="Tarla Gözcüsü Logo2" src="https://github.com/user-attachments/assets/8d25655d-8f1a-47eb-9656-b6b3c18194ad" />
 
 ## Ürün Açıklaması
