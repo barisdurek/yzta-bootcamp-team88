@@ -31,6 +31,8 @@ Tarla Gözcüsü
 - Tarımsal girdi maliyetlerini (su, gübre, ilaç) optimize etmek isteyen ticari üreticiler ve çiftçiler
 - Hobi amaçlı tarıma yönelen, veri odaklı karar almayı tercih eden her yaştan telefon sahibi kullanıcılar
 - Teknolojik tarım asistanlarına entegre olmaya açık tüm tarım sektörü paydaşları
+## YouTube Videosu
+- 
 ## Work (Epic) LIST URL
 - Jira List URL: https://zahidnabicelik.atlassian.net/jira/software/projects/E88/list?jql=project%20%3D%20E88%20ORDER%20BY%20cf%5B10019%5D%20ASC
 ## Sprints Timeline URL
