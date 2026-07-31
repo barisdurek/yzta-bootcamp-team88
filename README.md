@@ -121,15 +121,30 @@ Story'ler yapılacak işlere sub-task'lara bölünmüştür. Sprint'ler tamamlan
 
 
  - **Daily Scrum**:
+ - <img width="1612" height="939" alt="Daily Scrum" src="https://github.com/user-attachments/assets/d4232389-44ea-4f27-bfae-a0f074af1e11" />
+ - <img width="735" height="1033" alt="Daily Scrum 2" src="https://github.com/user-attachments/assets/815cd677-5bde-4eeb-baf6-03c8c53eaa29" />
 
-- **Sprint board update (screenshotlar)**: 
- 
-- **Ürün Durumu**:
 
-- **Sprint Review**:
+
+- **Sprint board update (screenshotlar)**:
+- <img width="2561" height="8884" alt="Sprint 3 Board 1" src="https://github.com/user-attachments/assets/228e58cb-a628-4fac-8903-e2b6f780feab" />
+- <img width="2561" height="8602" alt="Sprint 3 Board 2" src="https://github.com/user-attachments/assets/773273f3-52af-4184-bac1-6aa511c036e5" />
+- <img width="2561" height="9184" alt="Sprint 3 Board 3" src="https://github.com/user-attachments/assets/959d8c71-d659-4c70-9154-5dfcd0453d6e" />
 - 
 
+ 
+- **Ürün Durumu**:
+- Özet Ekranı: <img width="712" height="1600" alt="Özet EkranıTam" src="https://github.com/user-attachments/assets/21051e81-5d87-441b-a226-8ec6351c5545" />
+- Sulama: <img width="712" height="1600" alt="Sulama Sekmesi" src="https://github.com/user-attachments/assets/1df82bb3-9681-4567-a246-4c7438ddf72a" />
+- Teşhis: <img width="712" height="1600" alt="Teşhis Sonuçları1" src="https://github.com/user-attachments/assets/3fb4abe4-c816-4d32-8682-021300937c58" />
+- Risk Haritası: <img width="712" height="1600" alt="Risk Haritası Sekmesi" src="https://github.com/user-attachments/assets/7ece7c5c-64e4-4f06-ac71-fb4fd662300d" />
+- Terra AI: <img width="712" height="1600" alt="Terra AI2" src="https://github.com/user-attachments/assets/f7d1c4c9-3aa1-4d52-80cb-4af12cb3e652" />
+- Ayarlar: <img width="712" height="1600" alt="Ayarlar Ekranı" src="https://github.com/user-attachments/assets/af01c053-d0b3-467b-917b-f3d0ffc8ad5b" />
+
+- **Sprint Review**:
+- Sprint 3'ü hedeflerimize eksiksiz ulaşarak kapatıyoruz; bu süreçte projemizi sadece çalışan bir prototip olmaktan çıkarıp, sahaya inmeye hazır, canlı (deployed) bir ürüne dönüştürdük. AI karar destek ajanımız (Terra) ve CNN tabanlı hastalık teşhis modelimiz uçtan uca arayüze entegre edildi, ayrıca hatalı fotoğraf yüklemeleri veya API kesintileri gibi uç durumlar için hata yönetim mekanizmaları başarıyla test edildi. Backend sunucumuz bulut ortamına taşınarak Flutter mobil uygulamamızla kusursuz bir şekilde konuşturuldu ve kod tabanımız temiz kod prensiplerine uygun olarak rafine edildi. Son olarak, projemizin pazardaki değer önerisini ve teknik gücünü vurgulayan 3 dakikalık sunum videomuz, eksiksiz GitHub vitrinimiz ve tüm teslimat kanıtlarımız jüri değerlendirme matrisini maksimum düzeyde karşılayacak şekilde tamamlanıp final formuna eklendi.
+
 - **Sprint Retrospective:**
--
+- Bu son sprintte takım olarak en büyük başarımız, paralel çalışma kültürünü ve proaktif iletişimi tam anlamıyla oturtmuş olmamızdı; özellikle karmaşık matematiksel algoritmaların ve AI ajan promptlarının önceden netleştirilmesi, backend ve frontend ekiplerinin entegrasyon aşamasında yaşayabileceği darboğazları daha doğmadan çözdü. Canlıya alma ve mimari temizlik süreçlerinde karşılaştığımız zaman baskısını ve teknik engelleri, Daily Scrum'lardaki şeffaf bilgi paylaşımı ve yardımlaşma sayesinde çok hızlı aştık. 6 haftalık bootcamp maratonu boyunca herkesin kendi uzmanlık alanını en iyi şekilde icra edip yeri geldiğinde takım arkadaşının yükünü hafifletmesi, hem ortaya çıkan ürünün bütünlüğünü sağladı hem de kriz anlarında çevik kalabilen gerçek bir Scrum takımı olduğumuzu kanıtladı.
 </details>
 ---
