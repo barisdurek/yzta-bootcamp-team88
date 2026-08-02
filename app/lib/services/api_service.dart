@@ -8,8 +8,8 @@ class ApiService {
 
   // Default emulator IP targeting host machine localhost
   String baseUrl = 'https://tarla-gozcusu-backend.onrender.com';
-  static const Duration timeoutDuration = Duration(seconds: 15);
-  static const Duration aiTimeoutDuration = Duration(seconds: 45);
+  static const Duration timeoutDuration = Duration(seconds: 75);
+  static const Duration aiTimeoutDuration = Duration(seconds: 90);
 
   ApiService._init();
 
